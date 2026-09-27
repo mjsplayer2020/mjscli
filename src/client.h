@@ -1,0 +1,143 @@
+/* ---------------------------------------------------------------------------------------------- 
+ * 
+ * プログラム概要 ： mjscli：Mjaiクライアント
+ * バージョン     ： 0.0.0.0.1(初回作成版)
+ * プログラム名   ： mjs
+ * ファイル名     ： player.c
+ * クラス名       ： MJSPlayerクラス
+ * 処理概要       ： プレーヤークラス
+ * Ver0.0.0作成日 ： 2026/09/21 17:09:46
+ * 最終更新日     ： 2026/09/21 17:09:46
+ * 
+ * Copyright (c) 2010-2024 TechMileStoraJP, All rights reserved.
+ * 
+ * ---------------------------------------------------------------------------------------------- */
+
+#ifndef CLIENT_H_INCLUDED
+#define CLIENT_H_INCLUDED
+
+#include <stdio.h>
+#include <string.h>
+#include "player.h"
+
+/* ---------------------------------------------------------------------------------------------- */
+// 固定値
+/* ---------------------------------------------------------------------------------------------- */
+
+// バッファサイズ
+#define WK_COL_MAX_SIZE       512
+#define WK_MES_MAX_SIZE        64
+
+/* ---------------------------------------------------------------------------------------------- */
+// 変数定義
+/* ---------------------------------------------------------------------------------------------- */
+
+	// 手牌情報
+	static int  cli_ply_id;          // プレーヤ番号
+	static int  cli_tsumo_hai;       // 自摸牌
+	static bool cli_tsumo_aka;       // 自摸赤
+	static int  cli_sute_hai;        // 捨牌
+	static bool cli_sute_aka;        // 捨牌赤
+
+	// 赤牌情報
+	static int cli_max_aka_count[AKA_TYPE_MAX_COUNT];       // 最大赤牌枚数
+
+	// 表示モード
+	static int print_cli_mes_mode;                          // メッセージ表示レベル設定
+
+// 構造体定義
+struct MJSClient{
+
+	// MJAIメッセージ解析用バッファ
+	int  wk_str_count;                                      // 作業用文字配列の総数
+	char wk_str[WK_COL_MAX_SIZE][WK_MES_MAX_SIZE];          // 作業用文字配列
+
+};
+
+/* ---------------------------------------------------------------------------------------------- */
+// 関数定義
+/* ---------------------------------------------------------------------------------------------- */
+
+	// -----------------------------
+	// クライアントクラス初期化・終了処理
+	// -----------------------------
+	void mjs_client_init();        // Mjaiクライアントの処理開始
+	void mjs_client_post();        // Mjaiクライアントの処理終了
+
+	// -----------------------------
+	// メイン処理
+	// -----------------------------
+
+	// メイン関数
+	void set_ply_id(int tmp_ply_id);                                  // Mjaiクライアント・プレーヤ番号指定
+	void set_taku_stat_main(char* tmp_res_mes, char* tmp_snd_mes);    // Mjaiクライアント・送信メッセージ指定
+
+	// JSON解析
+	void read_logline(struct MJSClient *cli, char *line_buf);
+	void set_wk_param(struct MJSClient *cli, char* str);
+
+	// -----------------------------
+	// typeごとの処理確認
+	// -----------------------------
+
+	// typeごとの処理確認(メイン処理)
+	void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes);
+
+	// typeごとの処理確認(サブ処理)
+	void set_type_hello(struct MJSClient *cli, int tmp_wk_num);                                                   // helloメッセージ確認
+	void set_type_startgame(struct MJSClient *cli, int tmp_wk_num);                                               // 卓開始処理
+	void set_type_startkyoku(struct MJSClient *cli, int tmp_wk_num);                                              // 局開始処理
+	void set_type_tsumo(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num);      // 自摸時処理
+	void set_type_riichi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num);     // リーチ時処理
+	void set_type_dahai(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num);      // 捨牌時処理
+	void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num);        // ポン処理
+	void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num);        // チー処理
+	void set_type_hora(struct MJSClient *cli, int tmp_wk_num);                                                    // 和了処理
+	void set_type_ryukyoku(struct MJSClient *cli, int tmp_wk_num);                                                // 流局処理
+	void set_type_endkyoku(struct MJSClient *cli, int tmp_wk_num);                                                // 局終了処理
+
+	// 自摸後アクション(ply関数向け)
+	void set_post_tsumo_act(struct MJSPlyInfo *pinfo);
+
+	// -----------------------------
+	// メッセージ定義
+	// -----------------------------
+
+	// メッセージ定義(メイン処理)
+	void set_tsumo_act_mes(struct MJSPlyInfo *pinfo, char *tmp_snd_mes);                                                          // 自摸時メッセージ定義(メイン)
+	void set_naki_act_mes(struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_sute_ply_id);                                      // 鳴き確認時メッセージ定義(メイン)
+
+	// メッセージ定義(サブ処理)
+	void set_snd_joinmes(char *tmp_snd_mes);                                                                                      // ジョインメッセージ
+	void set_snd_dahai_mes(char *tmp_snd_mes, int hai, bool aka_flg, bool tsumogiri_flg);                                         // 捨牌メッセージ
+	void set_snd_riichi_mes(char *tmp_snd_mes);                                                                                   // リーチメッセージ
+	void set_snd_ankan_mes(char *tmp_snd_mes, int ankan_hai, int tehai_aka_count);                                                // 暗槓メッセージ
+	void set_snd_kakan_mes(char *tmp_snd_mes, int nakl_hai_num, bool naki_aka, int tehai_aka_count);                              // 加槓メッセージ
+	void set_snd_pon_mes(char *tmp_snd_mes, int ply_target, int nakl_hai, bool nakl_aka, int tehai_aka_count);                    // ポンメッセージ
+	void set_snd_chi_mes(char *tmp_snd_mes, int ply_target, int nakl_hai, bool nakl_aka, int naki_idx, int tehai_aka_count);      // チーメッセージ
+	void set_snd_minkan_mes(char *tmp_snd_mes, int ply_target, int nakl_hai, bool nakl_aka, int tehai_aka_count);                 // 明槓メッセージ
+	void set_snd_hora_mes(char *tmp_snd_mes, int ply_target, int agari_hai, bool agari_aka);                                      // 和了(ロン・ツモ)メッセージ                                                                                                  // 無効メッセージ
+	void set_snd_none_mes(char *tmp_snd_mes);                                                                                     // noneメッセージ
+
+	// -----------------------------
+	// サブ関数
+	// -----------------------------
+
+	// 牌情報取得
+	int  get_hainum(char hai_str[]);                                  // 牌番号取得
+	void Get_haichr(int hai_num, bool hai_aka, char hai_str[]);       // Mjai向け牌文字取得
+	int  get_dora_hai(int dora_marker);                                // ドラ表示牌からドラ牌を取得する
+
+	/* ----------------------------- */
+	// 表示関数：クライアント関数
+	/* ----------------------------- */
+	void print_cli_res_mes(char* tmp_mes);             // 受信メッセージ表示
+	void print_cli_snd_mes(char* tmp_mes);             // 送信メッセージ表示
+	void print_cli_wk_param(struct MJSClient *cli);    // cli構造体表示
+
+#endif /* CLIENT_H_INCLUDED */
+
+/* ---------------------------------------------------------------------------------------------- */
+// ソース終了
+/* ---------------------------------------------------------------------------------------------- */
+
