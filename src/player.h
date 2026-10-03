@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.1(初回作成版)
+ * バージョン     ： 0.0.0.0.2(期待値処理実装)
  * プログラム名   ： mjs
  * ファイル名     ： player.h
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/09/21 17:09:46
+ * 最終更新日     ： 2026/10/03 16:55:24
  * 
  * Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
  * 
@@ -223,21 +223,21 @@ typedef enum {
 	static int wrk_color_tehai[COLOR_MAX_COUNT][10];                  // 手牌ヒストグラム(色ごと0から9まで)
 	static int wrk_color_shanten[COLOR_MAX_COUNT];                    // 通常シャンテン(色ごと)
 
-	static int   wrk_max_mentsu_count[COLOR_MAX_COUNT];           // 最大面子数(色ごと)
-	static LBMen wrk_max_mentsu_stat[COLOR_MAX_COUNT][MEN_MAX];   // 最大面子状態(色ごと)
-	static int   wrk_max_mentsu_hai[COLOR_MAX_COUNT][MEN_MAX];    // 最大面子牌(色ごと)
+	static int   wrk_max_mentsu_count[COLOR_MAX_COUNT];               // 最大面子数(色ごと)
+	static LBMen wrk_max_mentsu_stat[COLOR_MAX_COUNT][MEN_MAX];       // 最大面子状態(色ごと)
+	static int   wrk_max_mentsu_hai[COLOR_MAX_COUNT][MEN_MAX];        // 最大面子牌(色ごと)
 
-	static int   wrk_mentsu_count[COLOR_MAX_COUNT];               // 面子数(色ごと)
-	static LBMen wrk_mentsu_stat[COLOR_MAX_COUNT][MEN_MAX];       // 面子状態(色ごと)
-	static int   wrk_mentsu_hai[COLOR_MAX_COUNT][MEN_MAX];        // 面子牌(色ごと)
+	static int   wrk_mentsu_count[COLOR_MAX_COUNT];                   // 面子数(色ごと)
+	static LBMen wrk_mentsu_stat[COLOR_MAX_COUNT][MEN_MAX];           // 面子状態(色ごと)
+	static int   wrk_mentsu_hai[COLOR_MAX_COUNT][MEN_MAX];            // 面子牌(色ごと)
 
-	static int   wrk_max_taatsu_count[COLOR_MAX_COUNT];           // 最大塔子数(色ごと)
-	static LBMen wrk_max_taatsu_stat[COLOR_MAX_COUNT][MEN_MAX];   // 最大塔子状態(色ごと)
-	static int   wrk_max_taatsu_hai[COLOR_MAX_COUNT][MEN_MAX];    // 最大塔子牌(色ごと)
+	static int   wrk_max_taatsu_count[COLOR_MAX_COUNT];               // 最大塔子数(色ごと)
+	static LBMen wrk_max_taatsu_stat[COLOR_MAX_COUNT][MEN_MAX];       // 最大塔子状態(色ごと)
+	static int   wrk_max_taatsu_hai[COLOR_MAX_COUNT][MEN_MAX];        // 最大塔子牌(色ごと)
 
-	static int   wrk_taatsu_count[COLOR_MAX_COUNT];               // 塔子数(色ごと)
-	static LBMen wrk_taatsu_stat[COLOR_MAX_COUNT][MEN_MAX];       // 塔子状態(色ごと)
-	static int   wrk_taatsu_hai[COLOR_MAX_COUNT][MEN_MAX];        // 塔子牌(色ごと)
+	static int   wrk_taatsu_count[COLOR_MAX_COUNT];                   // 塔子数(色ごと)
+	static LBMen wrk_taatsu_stat[COLOR_MAX_COUNT][MEN_MAX];           // 塔子状態(色ごと)
+	static int   wrk_taatsu_hai[COLOR_MAX_COUNT][MEN_MAX];            // 塔子牌(色ごと)
 
 	// -----------------------------
 	// 捨牌候補・捨牌候補ごとの有効牌
@@ -270,8 +270,8 @@ typedef enum {
 	static int    sutekoho_ev_count[SUTE_KOHO_MAX_COUNT];             // 期待値候補数 
 
 	// 最終捨牌候補
+	static double ev_score_max;                                       // 期待値の最大数
 	static int yuko_max_count;                                        // 有効牌の最大数
-	static int ev_score_max;                                          // 期待値の最大数
 	static int tusmoari_nakikoho_max_count;                           // 鳴き候補牌の最大数
 	static int prefix_sutekoho_count;                                 // 決定前の捨牌数(有効牌と牌プライオリティから算出)
 	static int prefix_sutekoho_num[SUTE_KOHO_MAX_COUNT];              // 決定前の捨牌候補
@@ -329,7 +329,7 @@ typedef enum {
 
 	// 期待値計算(一向聴)
 	static int ev_1shanten_yukohai_count;
-	static int ev_1shanten_yukohai[PAI_MAX];                        
+	static int ev_1shanten_yukohai[PAI_MAX];
 	static int ev_1shanten_sutehai_count[PAI_MAX];                         // 有効牌ごと
 	static int ev_1shanten_sutehai[PAI_MAX][TSUMOARI_TEHAI_MAX];    
 	static double ev_1shanten_evscore[PAI_MAX][TSUMOARI_TEHAI_MAX]; 

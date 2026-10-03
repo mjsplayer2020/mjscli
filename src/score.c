@@ -1,15 +1,15 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.1(初回作成版)
+ * バージョン     ： 0.0.0.0.2(期待値処理実装)
  * プログラム名   ： mjs
  * ファイル名     ： player.c
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/09/21 17:09:46
+ * 最終更新日     ： 2026/10/03 16:55:24
  * 
- * Copyright (c) 2010-2025 TechMileStoraJP, All rights reserved.
+ * Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
  * 
  * ---------------------------------------------------------------------------------------------- */
 
@@ -424,7 +424,7 @@ void ChkAgariScoreInfo(struct MJSYakuinfo *yk){
 // メイン処理：和了得点設定
 /* ---------------------------------------------------------------------------------------------- */
 void SetAgari(
-	struct MJSYakuinfo *yk,          // 和了役情報構造体
+	struct MJSYakuinfo *yk,   // 和了役情報構造体
 	int  kyoku,               // 局番号
 	int  ie[],                // プレーヤの家情報
 	int  dora_count,          // 表ドラ牌枚数
@@ -1583,6 +1583,7 @@ void Chk_yaku(struct MJSYakuinfo *yk, int  tehai_hist[]){
 	// 符の合計(ピンヅモ有無確認後に実行)
 	// -----------------------------
 
+	// 基礎符
 	yk->basefu = 20;
 
 	// 符の合計
@@ -2002,13 +2003,14 @@ void ChkYakuChitoiIpeko(struct MJSYakuinfo *yk){
 		     yk->menzen_flg == true &&
 			 yk->yaku_flg[IPEKO] == true){
 
-			// 二盃口有効化
+			// 役flg有効化(二盃口有効化)
 			yk->yaku_flg[IPEKO] = false;
 			yk->yaku_flg[RYANPEKO] = true;
 			break;
 
 		// 一盃口の有効化確認
 		}else if ( yk->shuntsu_hist[tmp_i] > 1 && yk->menzen_flg == true ){
+
 			// 役flg有効化
 			yk->yaku_flg[IPEKO] = true;
 
@@ -2045,7 +2047,7 @@ void ChkYakuChinItsu_HonItsu(struct MJSYakuinfo *yk){
 		// -----------------------------------------------------------------------
 		// 10: 字一色
 		// -----------------------------------------------------------------------
-		}else if( yk->mentsu_count_zihai == 5){
+		}else if( yk->mentsu_count_zihai == 5 ){
 
 			// 役flg有効化
 			yk->yakuman_flg[TSUISO]=true;

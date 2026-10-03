@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.1(初回作成版)
+ * バージョン     ： 0.0.0.0.2(期待値処理実装)
  * プログラム名   ： mjs
  * ファイル名     ： player.c
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/09/21 17:09:46
+ * 最終更新日     ： 2026/10/03 16:55:24
  * 
  * Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
  * 
@@ -2037,7 +2037,24 @@ void ChkTsumoNashiShanten(){
 
 		// 期待値計算
 		for(int tmp_i=0; tmp_i < nakikoho_tbl_count; tmp_i++){
+
+			// 得点計算処理
 			set_tenpai_kitaichi(tmp_i);
+
+/*
+			// デバッグ用
+			fprintf(stderr,"***得点%d***\n",yk.kyoku_score[ply_id]);
+			fprintf(stderr,"***ハン数%d***\n",yk.yakucount);
+			fprintf(stderr,"***ドラ数%d***\n",yk.agari_dora_count);
+			fprintf(stderr,"***符%d***\n",yk.scoreFu);
+
+			if (yk.yaku_flg[PINFU]==true){
+				fprintf(stderr,"平和：true\n");
+			}else{
+				fprintf(stderr,"平和：false\n");
+			}
+*/
+
 		}
 
 	// ----------------------------------------
@@ -2308,7 +2325,7 @@ void set_tenpai_kitaichi(int yuko_hai_num){
 	AGARI_NORMAL,             // 和了形式
 	ply_id,                   // 和了プレーヤ(席番号親"0", 席番号子"1")
 	((ply_id+1)%4),           // 振込プレーヤ(席番号"3")
-	false,                    // 自摸和了の有無(ロン和了)
+	true,                     // 自摸和了の有無(自摸和了)
 	nakikoho_tbl_hai[yuko_hai_num],  // 和了牌(有効牌テーブル情報)
 	false,                    // 和了牌の赤牌有無
 	tehai,                    // 和了時の手牌ヒストグラム
@@ -2571,44 +2588,73 @@ void SetFixedSutekoho(){
 	// tmp_dora_hai = dora_hai[0];
 
 	// ----------------------------------------
-	// 最大有効牌数の算出
-	// ----------------------------------------
-	for(int tmp_count=0; tmp_count < sutekoho_count; tmp_count++){
-		// 最大シャンテンから確認
-		if(shanten_normal == sutekoho_shanten[tmp_count]){
-			if(yuko_max_count < yuko_hai_count[tmp_count]){
-			   yuko_max_count = yuko_hai_count[tmp_count];
-			}
-		}
-	}
-
-	// ----------------------------------------
 	// 最大期待値の算出
 	// ----------------------------------------
 	for(int tmp_count=0; tmp_count < sutekoho_count; tmp_count++){
-		// 最大シャンテンから確認
-		if(shanten_normal == sutekoho_shanten[tmp_count]){
-			if(ev_score_max < sutekoho_ev_score[tmp_count]){
-			   ev_score_max = sutekoho_ev_score[tmp_count];
+		// シャンテン確認(シャンテンが2以下の場合)
+		if(shanten_normal < 3){
+			// 最大シャンテンから確認
+			if(shanten_normal == sutekoho_shanten[tmp_count]){
+				if(ev_score_max < sutekoho_ev_score[tmp_count]){
+				   ev_score_max = sutekoho_ev_score[tmp_count];
+				}
 			}
 		}
 	}
+	
+	// ----------------------------------------
+	// 最大有効牌数の算出
+	// ----------------------------------------
+	for(int tmp_count=0; tmp_count < sutekoho_count; tmp_count++){
+		// シャンテン確認(シャンテンが2以下の場合)
+		if(shanten_normal < 3){
+
+			// 最大シャンテンから算出
+			if(shanten_normal == sutekoho_shanten[tmp_count] && ev_score_max == sutekoho_ev_score[tmp_count] ){
+				if(yuko_max_count < yuko_hai_count[tmp_count]){
+				   yuko_max_count = yuko_hai_count[tmp_count];
+				}
+			}
+
+		}else{
+
+			// 最大シャンテンから算出
+			if(shanten_normal == sutekoho_shanten[tmp_count]){
+				if(yuko_max_count < yuko_hai_count[tmp_count]){
+				   yuko_max_count = yuko_hai_count[tmp_count];
+				}
+			}
+
+		}
+	}
+
+
 
 	// ----------------------------------------
 	// 最大鳴き候補牌の算出
 	// ----------------------------------------
 	for(int tmp_count = 0; tmp_count < sutekoho_count; tmp_count++){
 
-		// 最大期待値から確認(シャンテンが2以下の場合)
+		// シャンテン確認(シャンテンが2以下の場合)
+		if(shanten_normal < 3){
 		
-
-		// 最大シャンテンと有効牌数から確認(シャンテンが3以上の場合)
-		if(shanten_normal == sutekoho_shanten[tmp_count] && yuko_max_count == yuko_hai_count[tmp_count]){
-			if(tusmoari_nakikoho_max_count < tusmoari_nakikoho_count[tmp_count]){
-			   tusmoari_nakikoho_max_count = tusmoari_nakikoho_count[tmp_count];
+			// 最大シャンテンと最大期待値と有効牌数から確認(シャンテンが2以下の場合)
+			if(shanten_normal == sutekoho_shanten[tmp_count] && ev_score_max == sutekoho_ev_score[tmp_count] && yuko_max_count == yuko_hai_count[tmp_count] ){
+				if(tusmoari_nakikoho_max_count < tusmoari_nakikoho_count[tmp_count]){
+				   tusmoari_nakikoho_max_count = tusmoari_nakikoho_count[tmp_count];
+				}
 			}
-		}
 
+		}else{
+
+			// 最大シャンテンと有効牌数から確認(シャンテンが3以上の場合)
+			if(shanten_normal == sutekoho_shanten[tmp_count] && yuko_max_count == yuko_hai_count[tmp_count]){
+				if(tusmoari_nakikoho_max_count < tusmoari_nakikoho_count[tmp_count]){
+				   tusmoari_nakikoho_max_count = tusmoari_nakikoho_count[tmp_count];
+				}
+			}
+
+		}
 	}
 
 	// ----------------------------------------
@@ -2617,68 +2663,49 @@ void SetFixedSutekoho(){
 	prefix_sutekoho_count = 0;
 	for(int tmp_count = 0; tmp_count < sutekoho_count; tmp_count++){
 
-		// 最大有効牌枚数の確認(シャンテンが3以上の場合)
-		if( shanten_normal == sutekoho_shanten[tmp_count] &&                              // シャンテンが同じ
-		    yuko_max_count == yuko_hai_count[tmp_count]   &&                              // 有効牌数が同じ
-			tusmoari_nakikoho_max_count == tusmoari_nakikoho_count[tmp_count] ){          // 鳴き候補数が同じ
+		// シャンテン確認(シャンテンが2以下の場合)
+		if(shanten_normal < 3){
 
-			// プレ捨牌候補算出
-			prefix_sutekoho_num[prefix_sutekoho_count] = tmp_count;
-			prefix_sutekoho_count++;
+			// 最大有効牌枚数の確認(シャンテンが2以下の場合)
+			if( shanten_normal == sutekoho_shanten[tmp_count]  &&                         // シャンテンが同じ
+			    yuko_max_count == yuko_hai_count[tmp_count]    &&                         // 有効牌数が同じ
+				ev_score_max   == sutekoho_ev_score[tmp_count] &&                         // 期待値が同じ
+				tusmoari_nakikoho_max_count == tusmoari_nakikoho_count[tmp_count] ){      // 鳴き候補数が同じ
 
-			// 牌プライオリティ比較(プライオリティが一番低い候補を算出)
-			tmp_sutekoho_priority = sutekoho_priority[tmp_count] + sutekoho_nearby_hai_count[tmp_count];
-			if( tmp_fixed_sutekoho_priority >= tmp_sutekoho_priority){
-				fixed_sutekoho_num = tmp_count;
-				tmp_fixed_sutekoho_priority = tmp_sutekoho_priority;
-			}
-		}
-
-	}
-
-/*
-	// ----------------------------------------
-	// 最終捨牌候補算出(ドラ検討)
-	// ----------------------------------------
-	// ドラ牌が3-7である
-	if( (tmp_dora_hai> 2 && tmp_dora_hai< 8) || 
-	    (tmp_dora_hai>12 && tmp_dora_hai<18) || 
-	    (tmp_dora_hai>22 && tmp_dora_hai<28) ){
-
-		// 最終捨牌候補がドラ牌かつプレ候補牌が2枚以上
-		if( sutekoho_hai[fixed_sutekoho_num] == tmp_dora_hai &&
-		    prefix_sutekoho_count > 1){
-
-			// ドラの最終捨牌候補番号
-			tmp_fixed_sutekoho_dora_num = fixed_sutekoho_num;
-
-			// もう一度候補牌を確認する
-			// 値を初期化
-			tmp_fixed_sutekoho_priority = 999;
-			tmp_sutekoho_priority = 0;
-
-			// 最終捨牌候補の再計算
-			for(int tmp_count=0; tmp_count < prefix_sutekoho_count; tmp_count++){
+				// プレ捨牌候補算出
+				prefix_sutekoho_num[prefix_sutekoho_count] = tmp_count;
+				prefix_sutekoho_count++;
 
 				// 牌プライオリティ比較(プライオリティが一番低い候補を算出)
-				tmp_sutekoho_priority = sutekoho_priority[prefix_sutekoho_num[tmp_count]] + sutekoho_nearby_hai_count[prefix_sutekoho_num[tmp_count]];
+				tmp_sutekoho_priority = sutekoho_priority[tmp_count] + sutekoho_nearby_hai_count[tmp_count];
+				if( tmp_fixed_sutekoho_priority >= tmp_sutekoho_priority){
+					fixed_sutekoho_num = tmp_count;
+					tmp_fixed_sutekoho_priority = tmp_sutekoho_priority;
+				}
+			}
 
-				// ドラ候補ではない
-				if( tmp_fixed_sutekoho_priority >= tmp_sutekoho_priority          &&
-					tmp_fixed_sutekoho_dora_num != prefix_sutekoho_num[tmp_count] ){
-					// 再計算後の最終捨牌候補
-					fixed_sutekoho_num = prefix_sutekoho_num[tmp_count];
+		}else{
+
+			// 最大有効牌枚数の確認(シャンテンが3以上の場合)
+			if( shanten_normal == sutekoho_shanten[tmp_count] &&                              // シャンテンが同じ
+			    yuko_max_count == yuko_hai_count[tmp_count]   &&                              // 有効牌数が同じ
+				tusmoari_nakikoho_max_count == tusmoari_nakikoho_count[tmp_count] ){          // 鳴き候補数が同じ
+
+				// プレ捨牌候補算出
+				prefix_sutekoho_num[prefix_sutekoho_count] = tmp_count;
+				prefix_sutekoho_count++;
+
+				// 牌プライオリティ比較(プライオリティが一番低い候補を算出)
+				tmp_sutekoho_priority = sutekoho_priority[tmp_count] + sutekoho_nearby_hai_count[tmp_count];
+				if( tmp_fixed_sutekoho_priority >= tmp_sutekoho_priority){
+					fixed_sutekoho_num = tmp_count;
 					tmp_fixed_sutekoho_priority = tmp_sutekoho_priority;
 				}
 
 			}
 
 		}
-
-	}else{
-		// ドラ牌が1289牌又は字牌→変更しない
 	}
-*/
 
 }
 
@@ -3371,7 +3398,9 @@ void print_tsumoari_tehai_info(){
 	fprintf(stderr,"頭枚数：%d枚\n"  , atama_count);
 	fprintf(stderr,"メンツ数：%d枚\n", mentsu_count);
 	fprintf(stderr,"ターツ数：%d枚\n", taatsu_count);
-
+	fprintf(stderr,"最大期待値：%8.2f\n", ev_score_max);
+	fprintf(stderr,"1向聴有効牌枚数：%d\n", ev_1shanten_yukohai_count);
+	
 	// 捨牌候補数
 	fprintf(stderr,"捨牌候補%d種\n", sutekoho_count);
 
