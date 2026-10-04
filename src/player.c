@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.2(期待値処理実装)
+ * バージョン     ： 0.0.0.0.3(不具合修正：イーシャンテン期待値計算の間違い)
  * プログラム名   ： mjs
  * ファイル名     ： player.c
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/10/03 16:55:24
+ * 最終更新日     ： 2026/10/04 19:52:59
  * 
  * Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
  * 
@@ -2364,6 +2364,9 @@ void set_tenpai_kitaichi(int yuko_hai_num){
 	// 合計期待値算出
 	nakikoho_tbl_total_ev_score = nakikoho_tbl_total_ev_score + nakikoho_tbl_parts_ev_score[yuko_hai_num];
 
+	// fprintf(stderr,"****デバッグ用 %d ****\n", nakikoho_tbl_score[yuko_hai_num]);
+	// fprintf(stderr,"****デバッグ用 期待値%8.2f ****\n", nakikoho_tbl_parts_ev_score[yuko_hai_num]);
+
 }
 
 /* ---------------------------------------------------------------------------------------------- */
@@ -2392,6 +2395,8 @@ void set_1shanten_kitaichi(){
 			ev_1shanten_yukohai_count++;
 		}
 	}
+
+	// fprintf(stderr,"*** ev_1shanten_yukohai_count %d***\n", ev_1shanten_yukohai_count);
 
 	// ----------------------------------------
 	// 有効牌ごとの捨牌設定
@@ -2448,15 +2453,15 @@ void set_1shanten_kitaichi(){
 
 			}
 
-			// 期待値合計を算出
-			ev_1shanten_totalscore = 
-			ev_1shanten_totalscore + ev_1shanten_maxevscore[tmp_i];
-
 			// 手牌戻し
 			tehai[ev_1shanten_yukohai[tmp_i]]--;
 			tehai[tmp_sute_koho[tmp_j]]++;
 
 		}
+
+		// 期待値合計を算出
+		ev_1shanten_totalscore = 
+		ev_1shanten_totalscore + ev_1shanten_maxevscore[tmp_i];
 
 	}
 
@@ -2677,8 +2682,9 @@ void SetFixedSutekoho(){
 				prefix_sutekoho_count++;
 
 				// 牌プライオリティ比較(プライオリティが一番低い候補を算出)
-				tmp_sutekoho_priority = sutekoho_priority[tmp_count] + sutekoho_nearby_hai_count[tmp_count];
-				if( tmp_fixed_sutekoho_priority >= tmp_sutekoho_priority){
+				// tmp_sutekoho_priority = sutekoho_priority[tmp_count] + sutekoho_nearby_hai_count[tmp_count];
+				tmp_sutekoho_priority = sutekoho_priority[tmp_count];
+					if( tmp_fixed_sutekoho_priority >= tmp_sutekoho_priority){
 					fixed_sutekoho_num = tmp_count;
 					tmp_fixed_sutekoho_priority = tmp_sutekoho_priority;
 				}
@@ -2696,12 +2702,12 @@ void SetFixedSutekoho(){
 				prefix_sutekoho_count++;
 
 				// 牌プライオリティ比較(プライオリティが一番低い候補を算出)
-				tmp_sutekoho_priority = sutekoho_priority[tmp_count] + sutekoho_nearby_hai_count[tmp_count];
-				if( tmp_fixed_sutekoho_priority >= tmp_sutekoho_priority){
+				// tmp_sutekoho_priority = sutekoho_priority[tmp_count] + sutekoho_nearby_hai_count[tmp_count];
+				tmp_sutekoho_priority = sutekoho_priority[tmp_count];
+					if( tmp_fixed_sutekoho_priority >= tmp_sutekoho_priority){
 					fixed_sutekoho_num = tmp_count;
 					tmp_fixed_sutekoho_priority = tmp_sutekoho_priority;
 				}
-
 			}
 
 		}
@@ -3508,16 +3514,13 @@ void print_tsumonashi_tehai_info(){
 		// 改行
 		fprintf(stderr,"\n");
 
-
-		// 3段目・表示されている牌の枚数
-		fprintf(stderr,"表示:%d枚\n", open_haiparts_count[nakikoho_tbl_hai[tmp_i]]);
-
-		// 6段目・第一自摸時の和了確率
-		fprintf(stderr,"R:%6.3f％\n", nakikoho_tbl_agari_rate[tmp_i]);
-
-		fprintf(stderr,"Sc%6d\n", nakikoho_tbl_score[tmp_i]);
-
-		fprintf(stderr,"ev%8.2f\n", nakikoho_tbl_parts_ev_score[tmp_i]);
+		// 期待値(テンパイ)
+		if(shanten_normal == 0){
+			fprintf(stderr,"表示:%d枚\n", open_haiparts_count[nakikoho_tbl_hai[tmp_i]]);
+			fprintf(stderr,"R:%6.3f％\n", nakikoho_tbl_agari_rate[tmp_i]);
+			fprintf(stderr,"Sc%6d\n", nakikoho_tbl_score[tmp_i]);
+			fprintf(stderr,"ev%8.2f\n", nakikoho_tbl_parts_ev_score[tmp_i]);
+		}
 
 		// 改行
 		fprintf(stderr,"====\n");
@@ -3541,6 +3544,19 @@ void print_tsumonashi_tehai_info(){
 
 	}
 
+	// 期待値(イーシャンテン)
+	if(shanten_normal == 1){
+
+		fprintf(stderr,"ev_1shanten_yukohai_count:%d枚\n",                    ev_1shanten_yukohai_count);
+		fprintf(stderr,"ev_1shanten_totalscore %8.2f\n", ev_1shanten_totalscore);
+
+		for(int tmp_i = 0; tmp_i < ev_1shanten_yukohai_count; tmp_i++){
+			fprintf(stderr,"ev_1shanten_sutehai_count:%d枚 ", ev_1shanten_sutehai_count[tmp_i]);
+			fprintf(stderr,"ev_1shanten_maxevscore %8.2f\n" , ev_1shanten_maxevscore[tmp_i]);
+		}
+
+	}
+	
 	// 河情報
 	print_kawa_line();
 
@@ -3612,7 +3628,7 @@ void print_sutekoho(int sutenum){
 	fprintf(stderr,"OP牌%2d枚", yuko_hai_count_open_haiparts[sutenum]);
 
 	// 期待値表示
-	fprintf(stderr,"期待値%8.2f %2dパターン", 
+	fprintf(stderr,"期待値%8.2f 期待値パターン%2d", 
 	sutekoho_ev_score[sutenum],
 	sutekoho_ev_count[sutenum]);
 

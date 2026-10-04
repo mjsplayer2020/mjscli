@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.2(期待値処理実装)
+ * バージョン     ： 0.0.0.0.3(不具合修正：イーシャンテン期待値計算の間違い)
  * プログラム名   ： mjs
  * ファイル名     ： player.h
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/10/03 16:55:24
+ * 最終更新日     ： 2026/10/04 19:52:59
  * 
  * Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
  * 
@@ -249,8 +249,8 @@ typedef enum {
 	static int sutekoho_shanten[SUTE_KOHO_MAX_COUNT];                 // 捨牌候補の向聴数
 	static int sutekoho_priority[SUTE_KOHO_MAX_COUNT];                // 捨牌候補の距離
 
-	static int sutekoho_nearby_hai_count[SUTE_KOHO_MAX_COUNT];        // 捨牌候補のくっつき牌(nearby_hai)枚数
-	static int sutekoho_dora_length[SUTE_KOHO_MAX_COUNT];             // 捨牌候補のドラ距離
+//	static int sutekoho_nearby_hai_count[SUTE_KOHO_MAX_COUNT];        // 捨牌候補のくっつき牌(nearby_hai)枚数
+//	static int sutekoho_dora_length[SUTE_KOHO_MAX_COUNT];             // 捨牌候補のドラ距離
 
 	// 有効牌
 	static bool yuko_hai[SUTE_KOHO_MAX_COUNT][PAI_MAX];               // 有効牌
