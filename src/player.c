@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.3(不具合修正：イーシャンテン期待値計算の間違い)
+ * バージョン     ： 0.0.0.0.5(オリ判断：期待値実装)
  * プログラム名   ： mjs
  * ファイル名     ： player.c
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/10/04 19:52:59
+ * 最終更新日     ： 2026/10/17 00:32:18
  * 
  * Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
  * 
@@ -29,7 +29,7 @@ void PlyActTakuStart(int tmp_ply_id, int tmp_init_score, int tmp_aka_man_max, in
 	print_ply_mode = 0;
 
 	// プレーヤタイプ設定
-	ply_type = PLYCHAR_MJSPLY_TEST;     // 初期テスト用
+	ply_type = PLYCHAR_KAEDE;
 
 	// 局INDEX初期化
 	kyoku_index = 0;
@@ -687,16 +687,17 @@ void set_ori_stat(){
 			// 聴牌なら
 			// ----------------------------------------
 			if ( shanten_normal == 0){
-			// 押しモード
-			ply_tehai_ori_stat = false;
+
+				// 押しモード
+				ply_tehai_ori_stat = false;
 
 			// ----------------------------------------
 			// 1シャンテンなら
 			// ----------------------------------------
 			}else if(shanten_normal == 1){
 
-				// 有効牌が10枚以上
-				if(yuko_max_count > 9){
+				// if(yuko_max_count > 3){		// 有効牌が4枚以上
+				if (ev_score_max > 40){		// 期待値が40以上
 					// 押しモード
 					ply_tehai_ori_stat = false;
 				}else{
@@ -704,7 +705,7 @@ void set_ori_stat(){
 					ply_tehai_ori_stat = true;
 				}
 
-			// ----------------------------------------
+				// ----------------------------------------
 			// 2シャンテン以下なら
 			// ----------------------------------------
 			}else{
@@ -1803,7 +1804,8 @@ void ChkTsumoNashiShanten(){
 
 	// 鳴き候補数
 	nakikoho_tbl_count = 0;
-
+	ev_tenpai_yukohai_count = 0;
+	
 	// ----------------------------------------
 	// 鳴き候補算出
 	// ----------------------------------------
@@ -1881,8 +1883,9 @@ void ChkTsumoNashiShanten(){
 					// 自摸無し有効牌の設定
 					yuko_hai_13mai[j] = true;
 
-					// テンパイならば、和了牌としてテーブルに格納する
+					// 聴牌ならば、和了牌としてテーブルに格納する
 					if(shanten_normal == -1){
+
 						// ----------------------------------------
 						// 鳴き候補テーブル定義(ロン和了)
 						// ----------------------------------------
@@ -1891,8 +1894,18 @@ void ChkTsumoNashiShanten(){
 						nakikoho_tbl_act[nakikoho_tbl_count] = ACTRON;
 						nakikoho_tbl_idx[nakikoho_tbl_count] = j;
 						nakikoho_tbl_yesno[nakikoho_tbl_count] = false;
+
 						// 鳴き候補数の加算
 						nakikoho_tbl_count++;
+
+						// ----------------------------------------
+						// 期待値テーブル定義(ロン和了)
+						// ----------------------------------------
+						// 期待値定義(ロン和了)
+						ev_tenpai_yukohai[ev_tenpai_yukohai_count] = j;
+						
+						// 和了牌枚数の加算
+						ev_tenpai_yukohai_count++;
 
 					}else{
 
@@ -2030,36 +2043,16 @@ void ChkTsumoNashiShanten(){
 	}
 
 	// ----------------------------------------
-	// 期待値算出(テンパイ)
+	// 期待値算出
 	// ----------------------------------------
-	nakikoho_tbl_total_ev_score = 0.0;  // 合計期待値初期化
+
+	// 聴牌時・期待値算出
 	if(tmp_org_shanten == 0){
 
-		// 期待値計算
-		for(int tmp_i=0; tmp_i < nakikoho_tbl_count; tmp_i++){
+		// 得点計算処理
+		set_tenpai_kitaichi();
 
-			// 得点計算処理
-			set_tenpai_kitaichi(tmp_i);
-
-/*
-			// デバッグ用
-			fprintf(stderr,"***得点%d***\n",yk.kyoku_score[ply_id]);
-			fprintf(stderr,"***ハン数%d***\n",yk.yakucount);
-			fprintf(stderr,"***ドラ数%d***\n",yk.agari_dora_count);
-			fprintf(stderr,"***符%d***\n",yk.scoreFu);
-
-			if (yk.yaku_flg[PINFU]==true){
-				fprintf(stderr,"平和：true\n");
-			}else{
-				fprintf(stderr,"平和：false\n");
-			}
-*/
-
-		}
-
-	// ----------------------------------------
-	// 期待値算出(イーシャンテン)
-	// ----------------------------------------
+	// 一向聴時・期待値算出
 	}else if(tmp_org_shanten == 1){
 
 		// 期待値計算
@@ -2242,20 +2235,20 @@ void set_tsumoari_kitaichi(){
 	// ----------------------------------------
 	for(int tmp_i=0; tmp_i < sutekoho_count; tmp_i++){
 
-		// テンパイならば
+		// 聴牌ならば
 		if(shanten_normal == 0 && sutekoho_shanten[tmp_i] == 0){
 
 			// 捨牌候補の手牌削除
 			tehai[ply_tsumo_hai]++;
 			tehai[sutekoho_hai[tmp_i]]--;
-			nakikoho_tbl_total_ev_score = 0.0;
+			ev_tenpai_total_score = 0.0;
 			ev_1shanten_yukohai_count = 0;
 
 			// 期待値算出
 			ChkTsumoNashiShanten();
 
 			// 期待値代入
-			sutekoho_ev_score[tmp_i] = nakikoho_tbl_total_ev_score;
+			sutekoho_ev_score[tmp_i] = ev_tenpai_total_score;
 			sutekoho_ev_count[tmp_i] = nakikoho_tbl_count;
 
 			// 捨牌候補の手牌戻し
@@ -2296,76 +2289,108 @@ void set_tsumoari_kitaichi(){
 }
 
 /* ---------------------------------------------------------------------------------------------- */
-// 期待値計算(テンパイ)
+// 期待値計算(聴牌)
 /* ---------------------------------------------------------------------------------------------- */
-void set_tenpai_kitaichi(int yuko_hai_num){
+void set_tenpai_kitaichi(){
 
-	// 期待値初期化
-	unkown_resthai_count = 122.0;   // 残り枚数定義
+	// 合計期待値初期化
+	ev_tenpai_total_score = 0.0;
 
-	// ----------------------------------------
-	// 和了得点算出
-	// ----------------------------------------
+	// 期待値計算
+	for(int tmp_i=0; tmp_i < nakikoho_tbl_count; tmp_i++){
 
-	// 手牌仮置き
-	tehai[nakikoho_tbl_hai[yuko_hai_num]]++;
+		// 期待値初期化
+		unkown_resthai_count = 122.0;   // 残り枚数定義
 
-	// シャンテン確認
-	set_normal_shanten();
+		// ----------------------------------------
+		// 和了得点算出
+		// ----------------------------------------
 
-	// 得点確認
-	SetAgari(
-	&yk,                      // 和了役情報構造体(ポイント渡し)
-	0,                        // 局番号
-	ie,                       // プレーヤの家情報(配列)
-	dora_count,               // 表ドラ牌枚数
-	dora_marker,              // 表ドラ牌情報(配列)
-	0,                        // 裏ドラ牌枚数
-	dora_marker,              // 裏ドラ牌情報
-	AGARI_NORMAL,             // 和了形式
-	ply_id,                   // 和了プレーヤ(席番号親"0", 席番号子"1")
-	((ply_id+1)%4),           // 振込プレーヤ(席番号"3")
-	true,                     // 自摸和了の有無(自摸和了)
-	nakikoho_tbl_hai[yuko_hai_num],  // 和了牌(有効牌テーブル情報)
-	false,                    // 和了牌の赤牌有無
-	tehai,                    // 和了時の手牌ヒストグラム
-	aka_count,                // 手牌の赤牌枚数
-	atama_hai,                // 頭牌
-	mentsu_count,             // 面子数
-	mentsu_stat,              // 面子状態
-	mentsu_hai,               // 面子牌
-	mentsu_hai,               // 面子INDEX
-	naki_count,               // 鳴き面子数
-	naki_stat,                // 鳴き面子状態
-	naki_hai,                 // 鳴き面子牌
-	naki_idx,                 // 鳴き面子INDEX
-	naki_aka,                 // 鳴き面子赤牌枚数
-	false,                    // リーチフラグ
-	false,                    // リーチ一発フラグ
-	false                     // ダブルリーチフラグ
-	);
+		// 手牌仮置き
+		tehai[ev_tenpai_yukohai[tmp_i]]++;
 
-	// 手牌仮置きの無効化
-	tehai[nakikoho_tbl_hai[yuko_hai_num]]--;
+		// シャンテン確認
+		set_normal_shanten();
 
-	// ----------------------------------------
-	// 期待値算出
-	// ----------------------------------------
+		// 得点確認
+		SetAgari(
+			&yk,                      // 和了役情報構造体(ポイント渡し)
+			0,                        // 局番号
+			ie,                       // プレーヤの家情報(配列)
+			dora_count,               // 表ドラ牌枚数
+			dora_marker,              // 表ドラ牌情報(配列)
+			0,                        // 裏ドラ牌枚数
+			dora_marker,              // 裏ドラ牌情報
+			AGARI_NORMAL,             // 和了形式
+			ply_id,                   // 和了プレーヤ(席番号親"0", 席番号子"1")
+			((ply_id+1)%4),           // 振込プレーヤ(席番号"3")
+			true,                     // 自摸和了の有無(自摸和了)
+			ev_tenpai_yukohai[tmp_i], // 和了牌(有効牌テーブル情報)
+			false,                    // 和了牌の赤牌有無
+			tehai,                    // 和了時の手牌ヒストグラム
+			aka_count,                // 手牌の赤牌枚数
+			atama_hai,                // 頭牌
+			mentsu_count,             // 面子数
+			mentsu_stat,              // 面子状態
+			mentsu_hai,               // 面子牌
+			mentsu_hai,               // 面子INDEX
+			naki_count,               // 鳴き面子数
+			naki_stat,                // 鳴き面子状態
+			naki_hai,                 // 鳴き面子牌
+			naki_idx,                 // 鳴き面子INDEX
+			naki_aka,                 // 鳴き面子赤牌枚数
+			false,                    // リーチフラグ
+			false,                    // リーチ一発フラグ
+			false                     // ダブルリーチフラグ
+		);
 
-	// 得点代入
-	nakikoho_tbl_score[yuko_hai_num]          = yk.kyoku_score[ply_id];
+		// 手牌仮置きの無効化
+		tehai[ev_tenpai_yukohai[tmp_i]]--;
 
-	// 和了率算出
-	nakikoho_tbl_agari_rate[yuko_hai_num]     = (4-open_haiparts_count[nakikoho_tbl_hai[yuko_hai_num]]) / unkown_resthai_count * 100.0;
+		// ----------------------------------------
+		// 期待値算出
+		// ----------------------------------------
 
-	// 期待値算出
-	nakikoho_tbl_parts_ev_score[yuko_hai_num] = (4-open_haiparts_count[nakikoho_tbl_hai[yuko_hai_num]]) / unkown_resthai_count * yk.kyoku_score[ply_id];
+		// 得点代入
+		ev_tenpai_yukohai_score[tmp_i] = yk.kyoku_score[ply_id];
 
-	// 合計期待値算出
-	nakikoho_tbl_total_ev_score = nakikoho_tbl_total_ev_score + nakikoho_tbl_parts_ev_score[yuko_hai_num];
+		// ハン代入
+		ev_tenpai_yukohai_han[tmp_i] = yk.agari_ply_han;
+		
+		// 和了率算出
+		ev_tenpai_agari_rate[tmp_i]     = (4-open_haiparts_count[ev_tenpai_yukohai[tmp_i]]) / unkown_resthai_count * 100.0;
 
-	// fprintf(stderr,"****デバッグ用 %d ****\n", nakikoho_tbl_score[yuko_hai_num]);
-	// fprintf(stderr,"****デバッグ用 期待値%8.2f ****\n", nakikoho_tbl_parts_ev_score[yuko_hai_num]);
+		// 期待値算出
+		ev_tenpai_parts_ev_score[tmp_i] = (4-open_haiparts_count[ev_tenpai_yukohai[tmp_i]]) / unkown_resthai_count * yk.kyoku_score[ply_id];
+
+		// 合計和了率
+		ev_tenpai_total_agari_rate  = ev_tenpai_total_agari_rate  + ev_tenpai_agari_rate[tmp_i];
+
+		// 合計期待値算出
+		ev_tenpai_total_score = ev_tenpai_total_score + ev_tenpai_parts_ev_score[tmp_i];
+
+		// ----------------------------------------
+		// デバッグ用
+		// ----------------------------------------
+
+		// fprintf(stderr,"****デバッグ用 %d ****\n", ev_tenpai_yukohai_score[tmp_i]);
+		// fprintf(stderr,"****デバッグ用 期待値%8.2f ****\n", ev_tenpai_parts_ev_score[tmp_i]);
+
+/*
+		// デバッグ用
+		fprintf(stderr,"***得点%d***\n",yk.kyoku_score[ply_id]);
+		fprintf(stderr,"***ハン数%d***\n",yk.yakucount);
+		fprintf(stderr,"***ドラ数%d***\n",yk.agari_dora_count);
+		fprintf(stderr,"***符%d***\n",yk.scoreFu);
+
+		if (yk.yaku_flg[PINFU]==true){
+			fprintf(stderr,"平和：true\n");
+		}else{
+			fprintf(stderr,"平和：false\n");
+		}
+*/
+
+	}
 
 }
 
@@ -2435,12 +2460,12 @@ void set_1shanten_kitaichi(){
 				// 捨牌設定
 				ev_1shanten_sutehai[tmp_i][ev_1shanten_sutehai_count[tmp_i]] = tmp_sute_koho[tmp_j];
 
-				// テンパイ時手牌期待値の算出
+				// 聴牌時手牌期待値の算出
 				ChkTsumoNashiShanten();
 
 				// 有効牌ごとの期待値
 				ev_1shanten_evscore[tmp_i][ev_1shanten_sutehai_count[tmp_i]] 
-				= (4-open_haiparts_count[ev_1shanten_yukohai[tmp_i]]) / unkown_resthai_count * nakikoho_tbl_total_ev_score;
+				= (4-open_haiparts_count[ev_1shanten_yukohai[tmp_i]]) / unkown_resthai_count * ev_tenpai_total_score;
 
 				// 最大期待値算出
 				if (ev_1shanten_maxevscore[tmp_i] < ev_1shanten_evscore[tmp_i][ev_1shanten_sutehai_count[tmp_i]]){
@@ -3405,8 +3430,12 @@ void print_tsumoari_tehai_info(){
 	fprintf(stderr,"メンツ数：%d枚\n", mentsu_count);
 	fprintf(stderr,"ターツ数：%d枚\n", taatsu_count);
 	fprintf(stderr,"最大期待値：%8.2f\n", ev_score_max);
-	fprintf(stderr,"1向聴有効牌枚数：%d\n", ev_1shanten_yukohai_count);
-	
+
+	// (1向聴の場合)
+	if(shanten_normal==1){
+		fprintf(stderr,"1向聴有効牌枚数：%d\n", ev_1shanten_yukohai_count);
+	}
+
 	// 捨牌候補数
 	fprintf(stderr,"捨牌候補%d種\n", sutekoho_count);
 
@@ -3514,49 +3543,67 @@ void print_tsumonashi_tehai_info(){
 		// 改行
 		fprintf(stderr,"\n");
 
-		// 期待値(テンパイ)
-		if(shanten_normal == 0){
-			fprintf(stderr,"表示:%d枚\n", open_haiparts_count[nakikoho_tbl_hai[tmp_i]]);
-			fprintf(stderr,"R:%6.3f％\n", nakikoho_tbl_agari_rate[tmp_i]);
-			fprintf(stderr,"Sc%6d\n", nakikoho_tbl_score[tmp_i]);
-			fprintf(stderr,"ev%8.2f\n", nakikoho_tbl_parts_ev_score[tmp_i]);
-		}
-
-		// 改行
+		// 区切り文字
 		fprintf(stderr,"====\n");
-
-/*
-		// デバグ
-		fprintf(stderr,"翻%d\n", yk.yakucount);
-
-		// 通常役確認
-		for(int tmp_i = 0; tmp_i < YAKU_SHUBETSU_MAX; tmp_i++){
-			if(yk.yaku_flg[tmp_i] == true){
-				fprintf(stderr,"%2d:有効\n",tmp_i);
-			}else{
-				// fprintf(stderr,"%2d:無効\n",tmp_i);
-			}
-		}
-
-		// 改行
-		fprintf(stderr,"====\n");
-*/
 
 	}
 
+	// 期待値(聴牌時)
+	if(shanten_normal == 0){
+
+		// 総合情報
+		fprintf(stderr,"和了牌種別枚数(ev_tenpai_yukohai_count)：%d種\n", ev_tenpai_yukohai_count);
+		fprintf(stderr,"合計和了率(ev_tenpai_total_agari_rate)：%6.3f％\n", ev_tenpai_total_agari_rate);
+		fprintf(stderr,"合計期待値(ev_tenpai_total_score)：%8.2f\n"       , ev_tenpai_total_score);
+
+		// 改行
+		fprintf(stderr,"====\n");
+
+		// 有効牌ごとの表示
+		for(int tmp_i = 0; tmp_i < ev_tenpai_yukohai_count; tmp_i++){
+			fprintf(stderr,"%d:聴牌有効牌(和了牌) %d\n", tmp_i+1, ev_tenpai_yukohai[tmp_i]);
+			fprintf(stderr,"残り牌:%d枚\n",    4 - open_haiparts_count[ev_tenpai_yukohai[tmp_i]]);
+			fprintf(stderr,"和了率:%6.3f％\n", ev_tenpai_agari_rate[tmp_i]);
+			fprintf(stderr,"和了得点：%6d\n",  ev_tenpai_yukohai_score[tmp_i]);
+			fprintf(stderr,"和了ハン：%d\n",   ev_tenpai_yukohai_han[tmp_i]);
+			fprintf(stderr,"期待値：%8.2f\n",  ev_tenpai_parts_ev_score[tmp_i]);
+
+			// 改行
+			fprintf(stderr,"====\n");
+
+/*
+			// デバグ
+			fprintf(stderr,"翻%d\n", yk.yakucount);
+
+			// 通常役確認
+			for(int tmp_i = 0; tmp_i < YAKU_SHUBETSU_MAX; tmp_i++){
+				if(yk.yaku_flg[tmp_i] == true){
+					fprintf(stderr,"%2d:有効\n",tmp_i);
+				}else{
+					// fprintf(stderr,"%2d:無効\n",tmp_i);
+				}
+			}
+*/
+		}
+
 	// 期待値(イーシャンテン)
-	if(shanten_normal == 1){
+	}else if(shanten_normal == 1){
 
-		fprintf(stderr,"ev_1shanten_yukohai_count:%d枚\n",                    ev_1shanten_yukohai_count);
-		fprintf(stderr,"ev_1shanten_totalscore %8.2f\n", ev_1shanten_totalscore);
+		// 総合情報
+		fprintf(stderr,"ev_1shanten_yukohai_count:%d枚\n", ev_1shanten_yukohai_count);
+		fprintf(stderr,"ev_1shanten_totalscore %8.2f\n",   ev_1shanten_totalscore);
 
+		// 有効牌ごとの表示
 		for(int tmp_i = 0; tmp_i < ev_1shanten_yukohai_count; tmp_i++){
 			fprintf(stderr,"ev_1shanten_sutehai_count:%d枚 ", ev_1shanten_sutehai_count[tmp_i]);
 			fprintf(stderr,"ev_1shanten_maxevscore %8.2f\n" , ev_1shanten_maxevscore[tmp_i]);
 		}
 
+		// 改行
+		fprintf(stderr,"====\n");
+
 	}
-	
+
 	// 河情報
 	print_kawa_line();
 
@@ -3628,7 +3675,7 @@ void print_sutekoho(int sutenum){
 	fprintf(stderr,"OP牌%2d枚", yuko_hai_count_open_haiparts[sutenum]);
 
 	// 期待値表示
-	fprintf(stderr,"期待値%8.2f 期待値パターン%2d", 
+	fprintf(stderr,"期待値%8.2f 期待値パターン%2d枚", 
 	sutekoho_ev_score[sutenum],
 	sutekoho_ev_count[sutenum]);
 
@@ -3645,40 +3692,6 @@ void print_sutekoho(int sutenum){
 	// 改行
 	fprintf(stderr,"\n");
 	*/
-
-}
-
-/* ---------------------------------------------------------------------------------------------- */
-// 表示処理：プレーヤーキャラクター情報
-/* ---------------------------------------------------------------------------------------------- */
-void print_char_info(){
-
-	// プレーヤーキャラクター表示
-	if( ply_type == PLYCHAR_NONAME ){
-		// 00:プレーヤー
-		fprintf(stderr, "CHAR : NONAME_CHAR\n");
-	}else if( ply_type == PLYCHAR_WAKABA ){
-		// 01:プレーヤー
-		fprintf(stderr, "CHAR : WAKABA\n");
-	}else if( ply_type == PLYCHAR_AOBA ){
-		fprintf(stderr, "CHAR : AOBA\n");
-	}else if( ply_type == PLYCHAR_FATABA ){
-		// 04:プレーヤー
-		fprintf(stderr, "CHAR : FATABA\n");
-	}else if( ply_type == PLYCHAR_AYAME ){
-		fprintf(stderr, "CHAR : AYAME\n");
-	}else if( ply_type == PLYCHAR_TSUBOMI ){
-		// 11:プレーヤー
-		fprintf(stderr, "CHAR : TSUBOMI\n");
-	}else if( ply_type == PLYCHAR_MOMIJI ){
-		// 12:プレーヤー
-		fprintf(stderr, "CHAR : MOMIJI\n");
-	}else if( ply_type == PLYCHAR_MJSPLY_TEST ){
-		// 16:プレーヤー
-		fprintf(stderr, "CHAR : MJSPLAY_TEST\n");
-	}else{
-		fprintf(stderr, "CHAR : UNKNOWN_CHAR\n");
-	}
 
 }
 
@@ -3742,6 +3755,45 @@ void print_mentsu(LBMen men_stat, int men_hai, int men_idx, int aka_count){
 
 	// 牌番号
 	fprintf(stderr,", men_hai=%2d, men_idx=%2d, aka_count=%d", men_hai, men_idx, aka_count);
+
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+// 表示処理：プレーヤーキャラクター情報
+/* ---------------------------------------------------------------------------------------------- */
+void print_char_info(){
+
+	// プレーヤーキャラクター表示
+	if( ply_type == PLYCHAR_NONAME ){
+		// 00:プレーヤー
+		fprintf(stderr, "CHAR : NONAME_CHAR\n");
+	}else if( ply_type == PLYCHAR_WAKABA ){
+		// 01:プレーヤー
+		fprintf(stderr, "CHAR : WAKABA\n");
+	}else if( ply_type == PLYCHAR_FATABA ){
+		// 04:プレーヤー
+		fprintf(stderr, "CHAR : FATABA\n");
+	}else if( ply_type == PLYCHAR_AOBA ){
+		// 07:プレーヤー
+		fprintf(stderr, "CHAR : AOBA\n");
+	}else if( ply_type == PLYCHAR_AYAME ){
+		// 08:プレーヤー
+		fprintf(stderr, "CHAR : AYAME\n");
+	}else if( ply_type == PLYCHAR_TSUBOMI ){
+		// 11:プレーヤー
+		fprintf(stderr, "CHAR : TSUBOMI\n");
+	}else if( ply_type == PLYCHAR_KAEDE ){
+		// 12:プレーヤー
+		fprintf(stderr, "CHAR : KAEDE\n");
+	}else if( ply_type == PLYCHAR_MOMIJI ){
+		// 13:プレーヤー
+		fprintf(stderr, "CHAR : MOMIJI\n");
+	}else if( ply_type == PLYCHAR_MJSPLY_TEST ){
+		// 16:プレーヤー
+		fprintf(stderr, "CHAR : MJSPLAY_TEST\n");
+	}else{
+		fprintf(stderr, "CHAR : UNKNOWN_CHAR\n");
+	}
 
 }
 

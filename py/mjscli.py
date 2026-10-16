@@ -1,13 +1,13 @@
 # ---------------------------------------------------------------------------------------------- 
 # 
-# プログラム概要 ： 麻雀AI：MJSakuraモジュール
-# バージョン     ： 0.0.1.0.27(関数名変更：init, react)
+# プログラム概要 ： mjscli：Mjaiクライアント
+# バージョン     ： 0.0.0.0.5(オリ判断：期待値実装)
 # プログラム名   ： mjscli.py
 # 処理概要       ： Mjai送信処理ツール
-# Ver0.0.1作成日 ： 2024/06/22 20:30:48
-# 最終更新日     ： 2024/07/27 09:11:38
+# Ver0.0.0作成日 ： 2026/09/21 17:09:46
+# 最終更新日     ： 2026/10/17 00:32:18
 # 
-# Copyright (c) 2010-2024 TechMileStoraJP, All rights reserved.
+# Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
 # 
 # ---------------------------------------------------------------------------------------------- 
 
@@ -26,9 +26,9 @@ s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 # joinメッセージ送信
 res = s.recv(1024).decode("utf-8")
-print("=============")
-print(res)
-s.send(b"{\"type\":\"join\",\"name\":\"mjsply\",\"room\":\"default\"}\n")
+# print("=============")
+# print(res)
+s.send(b"{\"type\":\"join\",\"name\":\"mjscli\",\"room\":\"default\"}\n")
 
 # メッセージ送受信
 while True:
@@ -38,11 +38,9 @@ while True:
 #  print("================")
 #  print("RES->:")
 #  print(res)
-
   snd = mjs.react(res)
 #  print("================")
 #  print("<-SND:")
 #  print(snd)
   s.send(snd.encode('utf8'))
-
 # 処理ここまで

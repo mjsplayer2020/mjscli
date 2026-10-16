@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.3(不具合修正：イーシャンテン期待値計算の間違い)
+ * バージョン     ： 0.0.0.0.5(オリ判断：期待値実装)
  * プログラム名   ： mjs
  * ファイル名     ： player.h
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/10/04 19:52:59
+ * 最終更新日     ： 2026/10/17 00:32:18
  * 
  * Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
  * 
@@ -48,11 +48,12 @@ typedef enum {
 	PLYCHAR_TSUBAKI,                    // 09:プレーヤーキャラクター9
 	PLYCHAR_NADESHIKO,                  // 10:プレーヤーキャラクター10
 	PLYCHAR_TSUBOMI,                    // 11:プレーヤーキャラクター11
-	PLYCHAR_MOMIJI,                     // 12:プレーヤーキャラクター12
-	PLYCHAR_KAREHA,                     // 13:プレーヤーキャラクター13
-	PLYCHAR_OCHIBA,                     // 14:プレーヤーキャラクター14
-	PLYCHAR_SAKURA,                     // 15:プレーヤーサクラ
-	PLYCHAR_MJSPLY_TEST,                // 16:テスト用キャラクター
+	PLYCHAR_KAEDE,                      // 12:プレーヤーキャラクター12
+	PLYCHAR_MOMIJI,                     // 13:プレーヤーキャラクター13
+	PLYCHAR_KAREHA,                     // 14:プレーヤーキャラクター14
+	PLYCHAR_OCHIBA,                     // 15:プレーヤーキャラクター15
+	PLYCHAR_SAKURA,                     // 16:プレーヤーサクラ
+	PLYCHAR_MJSPLY_TEST,                // 17:テスト用キャラクター
 
 } LBPlyChar;
 
@@ -249,8 +250,8 @@ typedef enum {
 	static int sutekoho_shanten[SUTE_KOHO_MAX_COUNT];                 // 捨牌候補の向聴数
 	static int sutekoho_priority[SUTE_KOHO_MAX_COUNT];                // 捨牌候補の距離
 
-//	static int sutekoho_nearby_hai_count[SUTE_KOHO_MAX_COUNT];        // 捨牌候補のくっつき牌(nearby_hai)枚数
-//	static int sutekoho_dora_length[SUTE_KOHO_MAX_COUNT];             // 捨牌候補のドラ距離
+	// static int sutekoho_nearby_hai_count[SUTE_KOHO_MAX_COUNT];        // 捨牌候補のくっつき牌(nearby_hai)枚数
+	// static int sutekoho_dora_length[SUTE_KOHO_MAX_COUNT];             // 捨牌候補のドラ距離
 
 	// 有効牌
 	static bool yuko_hai[SUTE_KOHO_MAX_COUNT][PAI_MAX];               // 有効牌
@@ -312,7 +313,7 @@ typedef enum {
 	// -----------------------------
 
 	// 有効牌
-	static bool yuko_hai_13mai[PAI_MAX];                                   // 13枚時の有効牌
+	static bool yuko_hai_13mai[PAI_MAX];                                   // 13枚時の有効牌(true/false)
 
 	// 鳴き候補テーブル
 	static int  nakikoho_tbl_count;                                        // 鳴き候補テーブルの枚数
@@ -321,30 +322,40 @@ typedef enum {
 	static int  nakikoho_tbl_idx[NAKI_KOHO_MAX_COUNT];                     // 鳴き候補_牌INDEXテーブル
 	static bool nakikoho_tbl_yesno[NAKI_KOHO_MAX_COUNT];                   // 鳴き候補_アクション実行可否
 
+	// -----------------------------
+	// 期待値テーブル
+	// -----------------------------
+
 	// 期待値計算(聴牌)
-	static int    nakikoho_tbl_score[NAKI_KOHO_MAX_COUNT];                 // 鳴き候補_得点
-	static double nakikoho_tbl_agari_rate[NAKI_KOHO_MAX_COUNT];            // 鳴き候補_和了率
-	static double nakikoho_tbl_parts_ev_score[NAKI_KOHO_MAX_COUNT];        // 鳴き候補_期待値
-	static double nakikoho_tbl_total_ev_score;                             // テンパイ時の期待値合計
+	static int    ev_tenpai_yukohai_count;                                 // 有効牌(和了牌)の枚数
+	static double ev_tenpai_total_agari_rate;                              // 聴牌時の合計和了率
+	static double ev_tenpai_total_score;                                   // 聴牌時の合計期待値
+
+	static int    ev_tenpai_yukohai[NAKI_KOHO_MAX_COUNT];                  // 有効牌の牌番号
+	static int    ev_tenpai_yukohai_score[NAKI_KOHO_MAX_COUNT];            // 和了時得点
+	static int    ev_tenpai_yukohai_han[NAKI_KOHO_MAX_COUNT];              // 和了時ハン
+	static double ev_tenpai_agari_rate[NAKI_KOHO_MAX_COUNT];               // 和了率
+	static double ev_tenpai_parts_ev_score[NAKI_KOHO_MAX_COUNT];           // 有効牌ごとの期待値
 
 	// 期待値計算(一向聴)
-	static int ev_1shanten_yukohai_count;
-	static int ev_1shanten_yukohai[PAI_MAX];
-	static int ev_1shanten_sutehai_count[PAI_MAX];                         // 有効牌ごと
-	static int ev_1shanten_sutehai[PAI_MAX][TSUMOARI_TEHAI_MAX];    
-	static double ev_1shanten_evscore[PAI_MAX][TSUMOARI_TEHAI_MAX]; 
-	static int ev_1shanten_maxev_sutehai_num[PAI_MAX];              
+	static int    ev_1shanten_yukohai_count;                               // 有効牌の枚数
+	static double ev_1shanten_totalscore;                                  // 一向聴時の期待値合計
+
+	static int    ev_1shanten_yukohai[PAI_MAX];                            // 有効牌の牌番号
+	static int    ev_1shanten_sutehai_count[PAI_MAX];                      // 有効牌ごとの捨牌候補枚数
+	static int    ev_1shanten_sutehai[PAI_MAX][TSUMOARI_TEHAI_MAX];        // 有効牌ごとの捨牌番号
+	static double ev_1shanten_evscore[PAI_MAX][TSUMOARI_TEHAI_MAX];        // 有効牌ごとの期待値
+	static int    ev_1shanten_maxev_sutehai_num[PAI_MAX];                  // 有効牌ごとの最大期待値捨牌番号
 	static double ev_1shanten_maxevscore[PAI_MAX];                         // 有効牌ごとの最大期待値
-	static double ev_1shanten_totalscore;                                  // イーシャンテン時の期待値合計
 
 	// 向聴情報仮置きテーブル
 	static int karitbl_count;                                              // 仮向聴テーブル総数
-	static int kari_shanten[KARITBL_MAX_COUNT];
-	static int kari_tehai[KARITBL_MAX_COUNT][PAI_MAX];
+	static int kari_shanten[KARITBL_MAX_COUNT];                            // 向聴数
+	static int kari_tehai[KARITBL_MAX_COUNT][PAI_MAX];                     // 聴牌有無
 	static int karitbl_calc_count;                                         // 計算対象の総数
 
-	// 残り合計枚数
-	static double unkown_resthai_count;                                    // 計算対象の総数
+	// 残り牌の合計枚数
+	static double unkown_resthai_count;                                    // 計算対象の残り牌の合計枚数
 
 	// -----------------------------
 	// pinfo構造体(Plyアクション情報を定義)
@@ -479,7 +490,7 @@ void set_nakikoho_tbl();
 
 	// 期待値計算
 	void set_tsumoari_kitaichi();                      // 自摸有り時の期待値
-	void set_tenpai_kitaichi(int yuko_hai_num);        // 自摸無し時のテンパイ期待値
+	void set_tenpai_kitaichi();        // 自摸無し時のテンパイ期待値
 	void set_1shanten_kitaichi();                      // 自摸無し時の1シャンテン期待値
 
 	// -----------------------------
