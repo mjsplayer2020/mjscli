@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.1(初回作成版)
+ * バージョン     ： 0.0.0.0.6(client処理修正1：行区切り前提処理に変更)
  * プログラム名   ： mjs
- * ファイル名     ： player.c
+ * ファイル名     ： client.c
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/09/21 17:09:46
+ * 最終更新日     ： 2026/11/08 09:52:15
  * 
  * Copyright (c) 2010-2025 TechMileStoraJP, All rights reserved.
  * 
@@ -49,7 +49,7 @@ void set_taku_stat_main(char* tmp_res_mes, char* tmp_snd_mes){
 	// ----------------------------------------
 
 	// 結果表示モードの設定
-	print_cli_mes_mode = 1;
+	print_cli_mes_mode = 999;
 
 	// ----------------------------------------
 	// 変数初期化
@@ -439,8 +439,9 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "start_game" ) == 0 ){
 
 				// アクション設定
-				set_type_startgame(cli, tmp_wk_count);
-
+				// set_type_startgame(cli, tmp_wk_count);
+				set_type_startgame(cli, 0);
+				
 				// type_noneメッセージの設定
 				set_snd_none_mes(tmp_snd_mes);
 
@@ -454,13 +455,14 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "start_kyoku" ) == 0 ){
 
 				// アクション設定
-				set_type_startkyoku(cli, tmp_wk_count);
-
+				// set_type_startkyoku(cli, tmp_wk_count);
+				set_type_startkyoku(cli, 0);
+			         	
 				// type_noneメッセージの設定
 				set_snd_none_mes(tmp_snd_mes);
 
 				// メッセージ確定のために処理抜け
-				// break;
+				break;
 
 			// -----------------------
 			// 自摸アクション
@@ -469,7 +471,8 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "tsumo" ) == 0 ){
 
 				// アクション設定
-				set_type_tsumo(cli, pinfo, tmp_snd_mes, tmp_wk_count);
+				// set_type_tsumo(cli, pinfo, tmp_snd_mes, tmp_wk_count);
+				set_type_tsumo(cli, pinfo, tmp_snd_mes, 0);
 
 				// possible_actionsの値を確認するためにbreakで抜けない
 				// → メッセージ確定のために処理抜け
@@ -482,7 +485,8 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "reach" ) == 0 ){
 
 				// アクション設定：リーチ後の捨牌処理
-				set_type_riichi(cli, pinfo, tmp_snd_mes, tmp_wk_count);
+				// set_type_riichi(cli, pinfo, tmp_snd_mes, tmp_wk_count);
+				set_type_riichi(cli, pinfo, tmp_snd_mes, 0);
 
 				// メッセージ確定のために処理抜け
 				// break;
@@ -524,7 +528,8 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "dahai" ) == 0 ){
 
 				// アクション設定：捨牌(打牌)アクション
-				set_type_dahai(cli, pinfo, tmp_snd_mes, tmp_wk_count);
+				// set_type_dahai(cli, pinfo, tmp_snd_mes, tmp_wk_count);
+				set_type_dahai(cli, pinfo, tmp_snd_mes, 0);
 
 				// possible_actionsの値を確認するためにbreakで抜けない
 				// break;
@@ -536,7 +541,8 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "pon" ) == 0 ){
 
 				// アクション設定
-				set_type_pon(cli, pinfo, tmp_snd_mes, tmp_wk_count);
+				// set_type_pon(cli, pinfo, tmp_snd_mes, tmp_wk_count);
+				set_type_pon(cli, pinfo, tmp_snd_mes, 0);
 
 				// メッセージ確定のために処理抜け
 				// break;
@@ -548,7 +554,8 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "chi" ) == 0 ){
 
 				// アクション設定
-				set_type_chi(cli, pinfo, tmp_snd_mes, tmp_wk_count);
+				// set_type_chi(cli, pinfo, tmp_snd_mes, tmp_wk_count);
+				set_type_chi(cli, pinfo, tmp_snd_mes, 0);
 
 				// メッセージ確定のために処理抜け
 				// break;
@@ -602,7 +609,8 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "hora" ) == 0 ){
 
 				// アクション設定
-				set_type_hora(cli, tmp_wk_count);
+				// set_type_hora(cli, tmp_wk_count);
+				set_type_hora(cli, 0);
 
 				// type_noneメッセージの設定
 				set_snd_none_mes(tmp_snd_mes);
@@ -617,7 +625,8 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "ryukyoku" ) == 0 ){
 
 				// アクション設定
-				set_type_ryukyoku(cli, tmp_wk_count);
+				// set_type_ryukyoku(cli, tmp_wk_count);
+				set_type_ryukyoku(cli, 0);
 
 				// type_noneメッセージの設定
 				set_snd_none_mes(tmp_snd_mes);
@@ -632,7 +641,8 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "end_kyoku" ) == 0 ){
 
 				// アクション設定
-				set_type_endkyoku(cli, tmp_wk_count);
+				// set_type_endkyoku(cli, tmp_wk_count);
+				set_type_endkyoku(cli, 0);
 
 				// type_noneメッセージの設定
 				set_snd_none_mes(tmp_snd_mes);
@@ -1053,10 +1063,18 @@ void set_type_riichi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_
 void set_type_dahai(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num){
 
 	// 初期化
-	int tmp_ply_sute_id;
+	int tmp_ply_sute_id=0;
 
 	// 手番設定
 	tmp_ply_sute_id = atoi(cli->wk_str[tmp_wk_num+3]);
+
+	// 手番設定
+/*	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
+		if(strcmp(cli->wk_str[tmp_subwk_count], "actor" ) == 0 ){
+			tmp_ply_sute_id = atoi(cli->wk_str[tmp_subwk_count+1]);
+		}
+		break;
+	}*/
 
 	// ----------------------------------------
 	// 自摸プレーヤが自分ならば
@@ -1109,10 +1127,8 @@ void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 	// ----------------------------------------
 
 	int tmp_naki_ply_id;
-	// int tmp_target_ply_id;
-
-	int  tmp_naki_hai  = 0;
-	int  tmp_aka_count = 0;
+	int tmp_naki_hai  = 0;
+	int tmp_aka_count = 0;
 
 	// ----------------------------------------
 	// REACTプレーヤー(targetプレーヤー)の特定

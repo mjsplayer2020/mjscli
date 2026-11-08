@@ -250,9 +250,6 @@ typedef enum {
 	static int sutekoho_shanten[SUTE_KOHO_MAX_COUNT];                 // 捨牌候補の向聴数
 	static int sutekoho_priority[SUTE_KOHO_MAX_COUNT];                // 捨牌候補の距離
 
-	// static int sutekoho_nearby_hai_count[SUTE_KOHO_MAX_COUNT];        // 捨牌候補のくっつき牌(nearby_hai)枚数
-	// static int sutekoho_dora_length[SUTE_KOHO_MAX_COUNT];             // 捨牌候補のドラ距離
-
 	// 有効牌
 	static bool yuko_hai[SUTE_KOHO_MAX_COUNT][PAI_MAX];               // 有効牌
 	static int  yuko_haishu_count[SUTE_KOHO_MAX_COUNT];               // 有効牌の牌種別数

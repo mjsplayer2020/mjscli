@@ -387,7 +387,7 @@ void PlyActTsumo(struct MJSPlyInfo *pinfo, int tmp_tsumo_hai, bool tmp_tsumo_aka
 		// ----------------------------------------
 		}else{
 
-			if(kyoku_tsumo_count != 70){                  // 鳴きタイミングがラス牌でないのか？
+			if(kyoku_tsumo_count != 70){                  // 鳴き牌がラス牌の場合は処理を無効とする
 
 				// アクション確認 - 暗槓
 				// MJAIの不具合により、暗槓アクションをしない
@@ -680,8 +680,8 @@ void set_ori_stat(){
 	// リーチプレーヤが一人→条件確認
 	if(ply_riichi_stat_count == 1){
 
-		// リーチが6順目を超える(→6順目以内なら押しモード)
-		// if(){
+		// リーチが6順目を超えるなら、オリステータスの確認
+		if(ply_kawa_count[ply_id] > 6){
 
 			// ----------------------------------------
 			// 聴牌なら
@@ -696,7 +696,7 @@ void set_ori_stat(){
 			// ----------------------------------------
 			}else if(shanten_normal == 1){
 
-				// if(yuko_max_count > 3){		// 有効牌が4枚以上
+				// if(yuko_max_count > 3){	// 有効牌が4枚以上
 				if (ev_score_max > 40){		// 期待値が40以上
 					// 押しモード
 					ply_tehai_ori_stat = false;
@@ -705,13 +705,20 @@ void set_ori_stat(){
 					ply_tehai_ori_stat = true;
 				}
 
-				// ----------------------------------------
+			// ----------------------------------------
 			// 2シャンテン以下なら
 			// ----------------------------------------
 			}else{
 				// オリモード
 				ply_tehai_ori_stat = true;
 			}
+
+		// 6順目以内なら押しモード
+		}else{
+
+			// 押しモード
+			ply_tehai_ori_stat = false;
+		}
 
 	// リーチプレーヤが二人以上いる→ベタオリモード
 	}else{
