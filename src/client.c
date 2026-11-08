@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.6(client処理修正1：行区切り前提処理に変更)
+ * バージョン     ： 0.0.0.0.7(client処理修正2：set_type_startkyoku修正)
  * プログラム名   ： mjs
  * ファイル名     ： client.c
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/11/08 09:52:15
+ * 最終更新日     ： 2026/11/08 16:57:45
  * 
  * Copyright (c) 2010-2025 TechMileStoraJP, All rights reserved.
  * 
@@ -455,9 +455,8 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "start_kyoku" ) == 0 ){
 
 				// アクション設定
-				// set_type_startkyoku(cli, tmp_wk_count);
-				set_type_startkyoku(cli, 0);
-			         	
+				set_type_startkyoku(cli);
+
 				// type_noneメッセージの設定
 				set_snd_none_mes(tmp_snd_mes);
 
@@ -737,7 +736,7 @@ void set_type_startgame(struct MJSClient *cli, int tmp_wk_num){
 /* ---------------------------------------------------------------------------------------------- */
 // 局開始処理
 /* ---------------------------------------------------------------------------------------------- */
-void set_type_startkyoku(struct MJSClient *cli, int tmp_wk_num){
+void set_type_startkyoku(struct MJSClient *cli){
 
 	// ----------------------------------------
 	// 前処理
@@ -770,7 +769,7 @@ void set_type_startkyoku(struct MJSClient *cli, int tmp_wk_num){
 	// ----------------------------------------
 	// 局情報の算出
 	// ----------------------------------------
-	for( int tmp_subwk_count = tmp_wk_num; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
+	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
 
 		// -----------------------
 		// 次のtype
@@ -877,7 +876,6 @@ void set_type_startkyoku(struct MJSClient *cli, int tmp_wk_num){
 	// ----------------------------------------
 	// pinfo設定(局開始)
 	// ----------------------------------------
-	// PlyActKyokuStart(tmp_kaze, tmp_kyoku, tmp_honba, tmp_riichbo, tmp_ply_ie, tmp_score_flg, tmp_score, get_dora_hai(tmp_dora_hai));
 	PlyActKyokuStart(tmp_kaze, tmp_kyoku, tmp_honba, tmp_riichbo, tmp_ply_ie, tmp_score_flg, tmp_score, tmp_dora_hai);
 
 	// ----------------------------------------
@@ -917,59 +915,89 @@ void set_type_startkyoku(struct MJSClient *cli, int tmp_wk_num){
 /* ---------------------------------------------------------------------------------------------- */
 void set_type_tsumo(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num){
 
+	// ----------------------------------------
+	// 前処理
+	// ----------------------------------------
+
 	// アクション定義
 	// https://gimite.net/pukiwiki/index.php?Mjai%20%E9%BA%BB%E9%9B%80AI%E5%AF%BE%E6%88%A6%E3%82%B5%E3%83%BC%E3%83%90
 
 	// 初期化
-	int tmp_ply_id;
+	int tmp_ply_id = 4;
+
+	// ----------------------------------------
+	// 情報取得
+	// ----------------------------------------
+	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
+		// 手番設定
+		if(strcmp(cli->wk_str[tmp_subwk_count], "actor" ) == 0 ){
+			tmp_ply_id = atoi(cli->wk_str[tmp_subwk_count+1]);
+			break;
+		}
+	}
 
 	// 手番設定
-	tmp_ply_id = atoi(cli->wk_str[tmp_wk_num+3]);
+	// tmp_ply_id = atoi(cli->wk_str[tmp_wk_num+3]);
+
+	// 自摸牌確認
+	cli_tsumo_hai = get_hainum(cli->wk_str[tmp_wk_num+5]);
 
 	// ----------------------------------------
-	// 自摸プレーヤが自分ならば
+	// 自摸プレーヤが有効範囲内であるか？
 	// ----------------------------------------
-	if( cli_ply_id == tmp_ply_id ){
+	if( tmp_ply_id > -1 && tmp_ply_id < 4 ){
+	
+		// ----------------------------------------
+		// 自摸プレーヤが自分ならば
+		// ----------------------------------------
+		if( cli_ply_id == tmp_ply_id ){
+
+			// ----------------------------------------
+			// 牌情報設定
+			// ----------------------------------------
+			// 赤牌確認
+			if (cli_tsumo_hai > 100){
+				cli_tsumo_hai = cli_tsumo_hai  - 100;
+				cli_tsumo_aka = true;
+			}else{
+				cli_tsumo_aka = false;
+			}
+
+			// ----------------------------------------
+			// ply関数処理
+			// ----------------------------------------
+			PlyActTsumo(pinfo, cli_tsumo_hai, cli_tsumo_aka);
+
+			// ----------------------------------------
+			// メッセージ定義
+			// ----------------------------------------
+			set_tsumo_act_mes(pinfo, tmp_snd_mes);
+
+			// ----------------------------------------
+			// ply関数処理(自摸後アクション)
+			// ----------------------------------------
+			set_post_tsumo_act(pinfo);
 
 		// ----------------------------------------
-		// 牌情報設定
+		// 自摸プレーヤがCOMならば
 		// ----------------------------------------
-
-		// 自摸牌確認
-		cli_tsumo_hai = get_hainum(cli->wk_str[tmp_wk_num+5]);
-
-		// 赤牌確認
-		if (cli_tsumo_hai > 100){
-			cli_tsumo_hai = cli_tsumo_hai  - 100;
-			cli_tsumo_aka = true;
 		}else{
-			cli_tsumo_aka = false;
+
+			// ----------------------------------------
+			// OthPly自摸設定
+			// ----------------------------------------
+			PlyChkOthPlyTsumo();
+
+			// ----------------------------------------
+			// type_noneメッセージの設定
+			// ----------------------------------------
+			set_snd_none_mes(tmp_snd_mes);
 		}
 
-		// ----------------------------------------
-		// ply関数処理
-		// ----------------------------------------
-		PlyActTsumo(pinfo, cli_tsumo_hai, cli_tsumo_aka);
-
-		// ----------------------------------------
-		// メッセージ定義
-		// ----------------------------------------
-		set_tsumo_act_mes(pinfo, tmp_snd_mes);
-
-		// ----------------------------------------
-		// ply関数処理(自摸後アクション)
-		// ----------------------------------------
-		set_post_tsumo_act(pinfo);
-
 	// ----------------------------------------
-	// 自摸プレーヤがCOMならば
+	// 自摸プレーヤが例外数字ならば
 	// ----------------------------------------
 	}else{
-
-		// ----------------------------------------
-		// OthPly自摸設定
-		// ----------------------------------------
-		PlyChkOthPlyTsumo();
 
 		// ----------------------------------------
 		// type_noneメッセージの設定
@@ -984,19 +1012,19 @@ void set_type_tsumo(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_s
 /* ---------------------------------------------------------------------------------------------- */
 void set_post_tsumo_act(struct MJSPlyInfo *pinfo){
 
-		// 暗槓
-		if(pinfo->ply_act == ACTANKAN){
-			PlyActAnkan(pinfo->act_idx);
-		// 加槓
-		}else if(pinfo->ply_act == ACTKAKAN){
-			PlyActKakan(pinfo->act_idx, pinfo->act_aka_count);
-		// 捨牌
-		}else if(pinfo->ply_act == ACTSUTE){
-			PlyActTsumoSute();
-		// 自摸切り
-		}else if(pinfo->ply_act == ACTTSUMOGIRI){
-			PlyActTsumoSute();
-		}
+	// 暗槓
+	if(pinfo->ply_act == ACTANKAN){
+		PlyActAnkan(pinfo->act_idx);
+	// 加槓
+	}else if(pinfo->ply_act == ACTKAKAN){
+		PlyActKakan(pinfo->act_idx, pinfo->act_aka_count);
+	// 捨牌
+	}else if(pinfo->ply_act == ACTSUTE){
+		PlyActTsumoSute();
+	// 自摸切り
+	}else if(pinfo->ply_act == ACTTSUMOGIRI){
+		PlyActTsumoSute();
+	}
 
 }
 
@@ -1066,15 +1094,15 @@ void set_type_dahai(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_s
 	int tmp_ply_sute_id=0;
 
 	// 手番設定
-	tmp_ply_sute_id = atoi(cli->wk_str[tmp_wk_num+3]);
-
-	// 手番設定
 /*	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
 		if(strcmp(cli->wk_str[tmp_subwk_count], "actor" ) == 0 ){
 			tmp_ply_sute_id = atoi(cli->wk_str[tmp_subwk_count+1]);
 		}
 		break;
 	}*/
+
+	// 手番設定
+	tmp_ply_sute_id = atoi(cli->wk_str[tmp_wk_num+3]);
 
 	// ----------------------------------------
 	// 自摸プレーヤが自分ならば

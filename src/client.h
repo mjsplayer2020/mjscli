@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.1(初回作成版)
+ * バージョン     ： 0.0.0.0.7(client処理修正2：set_type_startkyoku修正)
  * プログラム名   ： mjs
  * ファイル名     ： client.h
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/09/21 17:09:46
+ * 最終更新日     ： 2026/11/08 16:57:45
  * 
  * Copyright (c) 2010-2024 TechMileStoraJP, All rights reserved.
  * 
@@ -86,7 +86,7 @@ struct MJSClient{
 	// typeごとの処理確認(サブ処理)
 	void set_type_hello(struct MJSClient *cli, int tmp_wk_num);                                                   // helloメッセージ確認
 	void set_type_startgame(struct MJSClient *cli, int tmp_wk_num);                                               // 卓開始処理
-	void set_type_startkyoku(struct MJSClient *cli, int tmp_wk_num);                                              // 局開始処理
+	void set_type_startkyoku(struct MJSClient *cli);                                                              // 局開始処理
 	void set_type_tsumo(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num);      // 自摸時処理
 	void set_type_riichi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num);     // リーチ時処理
 	void set_type_dahai(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num);      // 捨牌時処理
