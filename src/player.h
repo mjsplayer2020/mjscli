@@ -39,9 +39,9 @@ typedef enum {
 	PLYCHAR_NONAME = 0,                 // 00:プレーヤー状態なし
 	PLYCHAR_TAMPOPO,                    // 01:プレーヤーキャラクター1
 	PLYCHAR_HIMAWARI,                   // 02:プレーヤーキャラクター2
-	PLYCHAR_HITOHA,                     // 03:プレーヤーキャラクター3
-	PLYCHAR_FATABA,                     // 04:プレーヤーキャラクター4
-	PLYCHAR_WAKABA,                     // 05:プレーヤーキャラクター5
+	PLYCHAR_WAKABA,                     // 03:プレーヤーキャラクター3
+	PLYCHAR_HITOHA,                     // 04:プレーヤーキャラクター4
+	PLYCHAR_FATABA,                     // 05:プレーヤーキャラクター5
 	PLYCHAR_SHINBA,                     // 06:プレーヤーキャラクター6
 	PLYCHAR_AOBA,                       // 07:プレーヤーキャラクター7
 	PLYCHAR_AYAME,                      // 08:プレーヤーキャラクター8

@@ -9,7 +9,7 @@
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
  * 最終更新日     ： 2026/11/08 16:57:45
  * 
- * Copyright (c) 2010-2024 TechMileStoraJP, All rights reserved.
+ * Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
  * 
  * ---------------------------------------------------------------------------------------------- */
 

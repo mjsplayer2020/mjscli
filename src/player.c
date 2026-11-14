@@ -29,7 +29,7 @@ void PlyActTakuStart(int tmp_ply_id, int tmp_init_score, int tmp_aka_man_max, in
 	print_ply_mode = 0;
 
 	// プレーヤタイプ設定
-	ply_type = PLYCHAR_KAEDE;
+	ply_type = PLYCHAR_WAKABA;
 
 	// 局INDEX初期化
 	kyoku_index = 0;
@@ -3799,6 +3799,7 @@ void print_char_info(){
 		// 16:プレーヤー
 		fprintf(stderr, "CHAR : MJSPLAY_TEST\n");
 	}else{
+		// 例外プレーヤ
 		fprintf(stderr, "CHAR : UNKNOWN_CHAR\n");
 	}
 
