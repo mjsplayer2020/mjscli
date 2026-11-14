@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.8(client処理修正3：set_type_tsumo,set_type_dahai修正)
+ * バージョン     ： 0.0.0.0.9(client処理修正4：set_type_pon,set_type_chi修正)
  * プログラム名   ： mjs
  * ファイル名     ： client.c
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/11/14 11:50:08
+ * 最終更新日     ： 2026/11/14 20:17:29
  * 
  * Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
  * 
@@ -695,7 +695,7 @@ void set_type_startgame(struct MJSClient *cli, int tmp_wk_num){
 	// ----------------------------------------
 	// 卓情報の算出
 	// ----------------------------------------
-	for( int tmp_subwk_count = tmp_wk_num; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
+	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
 
 		// -----------------------
 		// 次のtype
@@ -935,12 +935,6 @@ void set_type_tsumo(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_s
 
 	}
 
-	// 手番設定
-	// tmp_ply_id = atoi(cli->wk_str[tmp_wk_num+3]);
-
-	// 自摸牌確認
-	// cli_tsumo_hai = get_hainum(cli->wk_str[tmp_wk_num+5]);
-
 	// ----------------------------------------
 	// 自摸プレーヤが有効範囲内であるか？
 	// ----------------------------------------
@@ -1120,48 +1114,82 @@ void set_type_dahai(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_s
 /* ---------------------------------------------------------------------------------------------- */
 void set_type_riichi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num){
 
+	// ----------------------------------------
 	// 初期化
-	int tmp_ply_id;
+	// ----------------------------------------
+	int tmp_ply_id = 4;
+
+	// ----------------------------------------
+	// 情報取得
+	// ----------------------------------------
+	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
+
+		// 手番設定
+		if(strcmp(cli->wk_str[tmp_subwk_count], "actor" ) == 0 ){
+			tmp_ply_id = atoi(cli->wk_str[tmp_subwk_count+1]);
+		// possible_actionsの無効化
+		}else if(strcmp(cli->wk_str[tmp_subwk_count], "possible_actions" ) == 0 ){
+			break;
+		}
+
+	}
 
 	// 手番設定
-	tmp_ply_id = atoi(cli->wk_str[tmp_wk_num+3]);
+	// tmp_ply_id = atoi(cli->wk_str[tmp_wk_num+3]);
 
 	// ----------------------------------------
-	// 自摸プレーヤが自分ならば
+	// 手番プレーヤが有効範囲内であるか？
 	// ----------------------------------------
-	if( cli_ply_id == tmp_ply_id ){
+	if( tmp_ply_id > -1 && tmp_ply_id < 4 ){
 
 		// ----------------------------------------
-		// ply関数処理
+		// 手番プレーヤが自分ならば
 		// ----------------------------------------
-		PlyActTsumo(pinfo, cli_tsumo_hai, cli_tsumo_aka);
+		if( cli_ply_id == tmp_ply_id ){
+
+			// ----------------------------------------
+			// ply関数処理
+			// ----------------------------------------
+			PlyActTsumo(pinfo, cli_tsumo_hai, cli_tsumo_aka);
+
+			// ----------------------------------------
+			// メッセージ定義
+			// ----------------------------------------
+			set_tsumo_act_mes(pinfo, tmp_snd_mes);
+
+			// ----------------------------------------
+			// ply関数処理(自摸後アクション)
+			// ----------------------------------------
+
+			// 捨牌
+			if(pinfo->ply_act == ACTSUTE){
+				PlyActTsumoSute();
+			// 自摸切り
+			}else if(pinfo->ply_act == ACTTSUMOGIRI){
+				PlyActTsumoSute();
+			}
 
 		// ----------------------------------------
-		// メッセージ定義
+		// 自摸プレーヤがCOMならば
 		// ----------------------------------------
-		set_tsumo_act_mes(pinfo, tmp_snd_mes);
+		}else{
 
-		// ----------------------------------------
-		// ply関数処理(自摸後アクション)
-		// ----------------------------------------
+			// ----------------------------------------
+			// OthPly自摸設定
+			// ----------------------------------------
+			PlyChkOthPlyRiichi(tmp_ply_id);
 
-		// 捨牌
-		if(pinfo->ply_act == ACTSUTE){
-			PlyActTsumoSute();
-		// 自摸切り
-		}else if(pinfo->ply_act == ACTTSUMOGIRI){
-			PlyActTsumoSute();
+			// ----------------------------------------
+			// type_noneメッセージの設定
+			// ----------------------------------------
+			set_snd_none_mes(tmp_snd_mes);
+
 		}
 
 	// ----------------------------------------
-	// 自摸プレーヤがCOMならば
+	// 自摸プレーヤが例外番号ならば
 	// ----------------------------------------
 	}else{
-
-		// ----------------------------------------
-		// OthPly自摸設定
-		// ----------------------------------------
-		PlyChkOthPlyRiichi(tmp_ply_id);
 
 		// ----------------------------------------
 		// type_noneメッセージの設定
@@ -1181,93 +1209,134 @@ void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 	// 初期化
 	// ----------------------------------------
 
-	int tmp_naki_ply_id;
-	int tmp_naki_hai  = 0;
-	int tmp_aka_count = 0;
+	int tmp_naki_ply_id     = 4;
+	int tmp_naki_hai        = 0;
+	int tmp_naki_tehai_hai1 = 0;
+	int tmp_naki_tehai_hai2 = 0;
+	int tmp_aka_count       = 0;
+
+	// ----------------------------------------
+	// 情報取得
+	// ----------------------------------------
+	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
+
+		// 手番設定
+		if(strcmp(cli->wk_str[tmp_subwk_count], "actor" ) == 0 ){
+			tmp_naki_ply_id = atoi(cli->wk_str[tmp_subwk_count+1]);
+		// 鳴き牌情報設定
+		}else if(strcmp(cli->wk_str[tmp_subwk_count], "pai" ) == 0 ){
+			tmp_naki_hai = get_hainum(cli->wk_str[tmp_subwk_count+1]);
+		// 鳴き牌情報設定
+		}else if(strcmp(cli->wk_str[tmp_subwk_count], "consumed" ) == 0 ){
+			tmp_naki_tehai_hai1 = get_hainum(cli->wk_str[tmp_subwk_count+1]);
+			tmp_naki_tehai_hai2 = get_hainum(cli->wk_str[tmp_subwk_count+2]);
+			// possible_actionsの無効化
+		}else if(strcmp(cli->wk_str[tmp_subwk_count], "possible_actions" ) == 0 ){
+			break;
+		}
+
+	}
 
 	// ----------------------------------------
 	// REACTプレーヤー(targetプレーヤー)の特定
 	// ----------------------------------------
 
 	// プレーヤーID確認
-	tmp_naki_ply_id  = atoi(cli->wk_str[tmp_wk_num+3]);
-	// tmp_target_ply_id = atoi(cli->wk_str[tmp_wk_num+5]);
+	// tmp_naki_ply_id  = atoi(cli->wk_str[tmp_wk_num+3]);
 
 	// ----------------------------------------
-	// 鳴きプレーヤが自分ならば
+	// 鳴きプレーヤが有効範囲内であるか？
 	// ----------------------------------------
-	if( cli_ply_id == tmp_naki_ply_id ){
+	if( tmp_naki_ply_id > -1 && tmp_naki_ply_id < 4 ){
 
 		// ----------------------------------------
-		// ポン牌確認(捨牌)
+		// 鳴きプレーヤが自分ならば
 		// ----------------------------------------
+		if( cli_ply_id == tmp_naki_ply_id ){
 
-		// 手牌読込
-		tmp_naki_hai = get_hainum(cli->wk_str[tmp_wk_num+7]);
-		// 赤牌確認
-		if (tmp_naki_hai > 100){
-			tmp_naki_hai = tmp_naki_hai - 100;
-			tmp_aka_count++;
-		}
+			// ----------------------------------------
+			// ポン牌確認(捨牌)
+			// ----------------------------------------
 
-		// ----------------------------------------
-		// 手牌確認(1枚目)
-		// ----------------------------------------
+			// 手牌読込
+			// tmp_naki_hai = get_hainum(cli->wk_str[tmp_wk_num+7]);
 
-		// 手牌読込
-		tmp_naki_hai = get_hainum(cli->wk_str[tmp_wk_num+9]);
-		// 赤牌確認
-		if (tmp_naki_hai > 100){
-			tmp_naki_hai = tmp_naki_hai - 100;
-			tmp_aka_count++;
-		}
+			// 赤牌確認
+			if (tmp_naki_hai > 100){
+				tmp_naki_hai = tmp_naki_hai - 100;
+				tmp_aka_count++;
+			}
 
-		// ----------------------------------------
-		// 手牌確認(2枚目)
-		// ----------------------------------------
+			// ----------------------------------------
+			// 手牌確認(1枚目)
+			// ----------------------------------------
 
-		// 手牌読込
-		tmp_naki_hai = get_hainum(cli->wk_str[tmp_wk_num+10]);
-		// 赤牌確認
-		if (tmp_naki_hai > 100){
-			tmp_naki_hai = tmp_naki_hai - 100;
-			tmp_aka_count++;
-		}
+			// 手牌読込
+			// tmp_naki_tehai_hai1 = get_hainum(cli->wk_str[tmp_wk_num+9]);
 
-		// ----------------------------------------
-		// ply関数処理(ポン処理)
-		// ----------------------------------------
+			// 赤牌確認
+			if (tmp_naki_tehai_hai1 > 100){
+				tmp_naki_tehai_hai1 = tmp_naki_tehai_hai1 - 100;
+				tmp_aka_count++;
+			}
 
-		// 鳴きアクション処理
-		PlyActNaki( pinfo,                        // 捨て牌アクション定義
+			// ----------------------------------------
+			// 手牌確認(2枚目)
+			// ----------------------------------------
+
+			// 手牌読込
+			// tmp_naki_tehai_hai2 = get_hainum(cli->wk_str[tmp_wk_num+10]);
+
+			// 赤牌確認
+			if (tmp_naki_tehai_hai2 > 100){
+				tmp_naki_tehai_hai2 = tmp_naki_tehai_hai2 - 100;
+				tmp_aka_count++;
+			}
+
+			// ----------------------------------------
+			// ply関数処理(ポン処理)
+			// ----------------------------------------
+
+			// 鳴きアクション処理
+			PlyActNaki( pinfo,                    // 捨て牌アクション定義
 	                tmp_naki_ply_id,              // 鳴きプレーヤ
 	                ACTPON,                       // 鳴きアクション種別
 	                tmp_naki_hai,                 // 鳴き牌
-	                tmp_naki_hai,                 // 鳴き面子(チー面子)の頭牌
+	                tmp_naki_hai,                 // 鳴き面子(ポン面子)の頭牌
 	                tmp_aka_count);               // 鳴き面子の赤牌枚数
 
-		// ----------------------------------------
-		// 鳴き捨牌アクション
-		// ----------------------------------------
-		PlyActNakiSute();
+			// ----------------------------------------
+			// 鳴き捨牌アクション
+			// ----------------------------------------
+			PlyActNakiSute();
+
+			// ----------------------------------------
+			// メッセージ定義：鳴き捨牌
+			// ----------------------------------------
+			if( pinfo->act_aka_count > 0){
+				set_snd_dahai_mes(tmp_snd_mes, pinfo->act_hai, true, false); 
+			}else{
+				set_snd_dahai_mes(tmp_snd_mes, pinfo->act_hai, false, false); 
+			}
 
 		// ----------------------------------------
-		// 捨牌メッセージの定義
+		// 自摸プレーヤがCOMならば
 		// ----------------------------------------
-
-		// メッセージ定義：鳴き捨牌
-		if( pinfo->act_aka_count > 0){
-			set_snd_dahai_mes(tmp_snd_mes, pinfo->act_hai, true, false); 
 		}else{
-			set_snd_dahai_mes(tmp_snd_mes, pinfo->act_hai, false, false); 
+
+			// メッセージ定義：処理なし
+			set_snd_none_mes(tmp_snd_mes);
+
 		}
 
 	// ----------------------------------------
-	// 自摸プレーヤがCOMならば
+	// 自摸プレーヤが例外番号ならば
 	// ----------------------------------------
 	}else{
 
-		// メッセージ定義：処理なし
+		// ----------------------------------------
+		// type_noneメッセージの設定
+		// ----------------------------------------
 		set_snd_none_mes(tmp_snd_mes);
 
 	}
@@ -1283,11 +1352,9 @@ void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 	// 初期化
 	// ----------------------------------------
 
-	int tmp_naki_ply_id;
-	// int tmp_target_ply_id;
+	int tmp_naki_ply_id = 4;
 
 	int  tmp_naki_hai = 0;
-	// bool tmp_naki_aka = false ;
 	int  tmp_aka_count = 0;
 
 	int tmp_naki_tehai_hai1 = 0;
@@ -1296,102 +1363,137 @@ void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 	int tmp_chi_idx = 0;
 
 	// ----------------------------------------
+	// 情報取得
+	// ----------------------------------------
+	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
+
+		// 手番設定
+		if(strcmp(cli->wk_str[tmp_subwk_count], "actor" ) == 0 ){
+			tmp_naki_ply_id = atoi(cli->wk_str[tmp_subwk_count+1]);
+		// 鳴き牌情報設定
+		}else if(strcmp(cli->wk_str[tmp_subwk_count], "pai" ) == 0 ){
+			tmp_naki_hai = get_hainum(cli->wk_str[tmp_subwk_count+1]);
+		// 鳴き牌情報設定
+		}else if(strcmp(cli->wk_str[tmp_subwk_count], "consumed" ) == 0 ){
+			tmp_naki_tehai_hai1 = get_hainum(cli->wk_str[tmp_subwk_count+1]);
+			tmp_naki_tehai_hai2 = get_hainum(cli->wk_str[tmp_subwk_count+2]);
+			// possible_actionsの無効化
+		}else if(strcmp(cli->wk_str[tmp_subwk_count], "possible_actions" ) == 0 ){
+			break;
+		}
+
+	}
+
+	// ----------------------------------------
 	// REACTプレーヤー(targetプレーヤー)の特定
 	// ----------------------------------------
 
 	// プレーヤーID確認
-	tmp_naki_ply_id  = atoi(cli->wk_str[tmp_wk_num+3]);
-	// tmp_target_ply_id = atoi(cli->wk_str[tmp_wk_num+5]);
+	// tmp_naki_ply_id  = atoi(cli->wk_str[tmp_wk_num+3]);
 
 	// ----------------------------------------
-	// 鳴きプレーヤが自分ならば
+	// 鳴きプレーヤが有効範囲内であるか？
 	// ----------------------------------------
-	if( cli_ply_id == tmp_naki_ply_id ){
+	if( tmp_naki_ply_id > -1 && tmp_naki_ply_id < 4 ){
 
 		// ----------------------------------------
-		// チー牌確認(捨牌)
+		// 鳴きプレーヤが自分ならば
 		// ----------------------------------------
-		tmp_naki_hai = get_hainum(cli->wk_str[tmp_wk_num+7]);
-		if (tmp_naki_hai > 100){
-			tmp_naki_hai = tmp_naki_hai - 100;
-			// tmp_naki_aka = true ;
-			tmp_aka_count++;
-		}
+		if( cli_ply_id == tmp_naki_ply_id ){
 
-		// ----------------------------------------
-		// チー構成牌(1枚目)
-		// ----------------------------------------
-		tmp_naki_tehai_hai1 = get_hainum(cli->wk_str[tmp_wk_num+9]);
-		if (tmp_naki_tehai_hai1 > 100){
-			tmp_naki_tehai_hai1 = tmp_naki_tehai_hai1 - 100;
-			tmp_aka_count++;
-		}
+			// ----------------------------------------
+			// チー牌確認(捨牌)
+			// ----------------------------------------
+			// tmp_naki_hai = get_hainum(cli->wk_str[tmp_wk_num+7]);
+			if (tmp_naki_hai > 100){
+				tmp_naki_hai = tmp_naki_hai - 100;
+				tmp_aka_count++;
+			}
 
-		// ----------------------------------------
-		// チー構成牌(2枚目)
-		// ----------------------------------------
-		tmp_naki_tehai_hai2 = get_hainum(cli->wk_str[tmp_wk_num+10]);
-		if (tmp_naki_tehai_hai2 > 100){
-			tmp_naki_tehai_hai2 = tmp_naki_tehai_hai2 - 100;
-			tmp_aka_count++;
-		}
+			// ----------------------------------------
+			// チー構成牌(1枚目)
+			// ----------------------------------------
+			// tmp_naki_tehai_hai1 = get_hainum(cli->wk_str[tmp_wk_num+9]);
+			if (tmp_naki_tehai_hai1 > 100){
+				tmp_naki_tehai_hai1 = tmp_naki_tehai_hai1 - 100;
+				tmp_aka_count++;
+			}
 
-		// ----------------------------------------
-		// チーINDEX牌算出
-		// ----------------------------------------
+			// ----------------------------------------
+			// チー構成牌(2枚目)
+			// ----------------------------------------
+			// tmp_naki_tehai_hai2 = get_hainum(cli->wk_str[tmp_wk_num+10]);
+			if (tmp_naki_tehai_hai2 > 100){
+				tmp_naki_tehai_hai2 = tmp_naki_tehai_hai2 - 100;
+				tmp_aka_count++;
+			}
 
-		// 1枚目2枚目の大小比較・交換
-		if(tmp_naki_tehai_hai1 > tmp_naki_tehai_hai2){
-			tmp_hai = tmp_naki_tehai_hai1;
-			tmp_naki_tehai_hai1 = tmp_naki_tehai_hai2;
-			tmp_naki_tehai_hai2 = tmp_hai;
-		}
+			// ----------------------------------------
+			// チーINDEX牌算出
+			// ----------------------------------------
 
-		// チーINDEX牌を算出
-		if (tmp_naki_tehai_hai1 == tmp_naki_hai - 2 ){
-			tmp_chi_idx = tmp_naki_tehai_hai1;
-		}else if (tmp_naki_tehai_hai1 == tmp_naki_hai - 1 ){
-			tmp_chi_idx = tmp_naki_tehai_hai1;
-		}else if (tmp_naki_tehai_hai1 == tmp_naki_hai + 1 ){
-			tmp_chi_idx = tmp_naki_hai;
-		}else {
-			tmp_chi_idx = 0;
-		}
+			// 1枚目2枚目の大小比較・交換
+			if(tmp_naki_tehai_hai1 > tmp_naki_tehai_hai2){
+				tmp_hai = tmp_naki_tehai_hai1;
+				tmp_naki_tehai_hai1 = tmp_naki_tehai_hai2;
+				tmp_naki_tehai_hai2 = tmp_hai;
+			}
 
-		// ----------------------------------------
-		// ply関数処理(チー処理)
-		// ----------------------------------------
+			// チーINDEX牌を算出
+			if (tmp_naki_tehai_hai1 == tmp_naki_hai - 2 ){
+				tmp_chi_idx = tmp_naki_tehai_hai1;
+			}else if (tmp_naki_tehai_hai1 == tmp_naki_hai - 1 ){
+				tmp_chi_idx = tmp_naki_tehai_hai1;
+			}else if (tmp_naki_tehai_hai1 == tmp_naki_hai + 1 ){
+				tmp_chi_idx = tmp_naki_hai;
+			}else {
+				tmp_chi_idx = 0;
+			}
 
-		// 鳴きアクション処理
-		PlyActNaki( pinfo,                        // 捨て牌アクション定義
+			// ----------------------------------------
+			// ply関数処理(チー処理)
+			// ----------------------------------------
+
+			// 鳴きアクション処理
+			PlyActNaki( pinfo,                    // 捨て牌アクション定義
 	                tmp_naki_ply_id,              // 鳴きプレーヤ
 	                ACTCHI,                       // 鳴きアクション種別
 	                tmp_naki_hai,                 // 鳴き牌
 	                tmp_chi_idx,                  // 鳴き面子(チー面子)の頭牌
 	                tmp_aka_count);               // 鳴き面子の赤牌枚数
 
-		// ----------------------------------------
-		// 鳴き捨牌アクション
-		// ----------------------------------------
-		PlyActNakiSute();
+			// ----------------------------------------
+			// 鳴き捨牌アクション
+			// ----------------------------------------
+			PlyActNakiSute();
+
+			// ----------------------------------------
+			// メッセージ定義：鳴き捨牌
+			// ----------------------------------------
+			if( pinfo->act_aka_count > 0){
+				set_snd_dahai_mes(tmp_snd_mes, pinfo->act_hai, true, false); 
+			}else{
+				set_snd_dahai_mes(tmp_snd_mes, pinfo->act_hai, false, false); 
+			}
 
 		// ----------------------------------------
-		// 捨牌メッセージの定義
+		// 自摸プレーヤがCOMならば
 		// ----------------------------------------
-
-		// メッセージ定義：鳴き捨牌
-		if( pinfo->act_aka_count > 0){
-			set_snd_dahai_mes(tmp_snd_mes, pinfo->act_hai, true, false); 
 		}else{
-			set_snd_dahai_mes(tmp_snd_mes, pinfo->act_hai, false, false); 
+
+			// メッセージ定義：処理なし
+			set_snd_none_mes(tmp_snd_mes);
+
 		}
 
 	// ----------------------------------------
-	// 自摸プレーヤがCOMならば
+	// 自摸プレーヤが例外番号ならば
 	// ----------------------------------------
 	}else{
 
-		// メッセージ定義：処理なし
+		// ----------------------------------------
+		// type_noneメッセージの設定
+		// ----------------------------------------
 		set_snd_none_mes(tmp_snd_mes);
 
 	}
@@ -1419,7 +1521,7 @@ void set_type_hora(struct MJSClient *cli, int tmp_wk_num){
 	// ----------------------------------------
 	// 和了情報の算出
 	// ----------------------------------------
-	for( int tmp_subwk_count = tmp_wk_num; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
+	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
 
 		// -----------------------
 		// 次のtype
@@ -1483,7 +1585,7 @@ void set_type_ryukyoku(struct MJSClient *cli, int tmp_wk_num){
 	// ----------------------------------------
 	// 流れ局情報の算出
 	// ----------------------------------------
-	for( int tmp_subwk_count = tmp_wk_num; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
+	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
 
 		// -----------------------
 		// 次のtype

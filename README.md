@@ -5,9 +5,9 @@
 
 ## 履歴
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.8(client処理修正3：set_type_tsumo,set_type_dahai修正)
+ * バージョン     ： 0.0.0.0.9(client処理修正4：set_type_pon,set_type_chi修正)
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/11/14 11:50:08
+ * 最終更新日     ： 2026/11/14 20:17:29
 
 ## Github
  * [mjsplayer2020/mjscli](https://github.com/mjsplayer2020/mjscli)
