@@ -1,13 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- 
  * 
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.9(client処理修正4：set_type_pon,set_type_chi修正)
+ * バージョン     ： 0.0.0.0.10(client処理修正5：tmp_wk_num変数の削除)
  * プログラム名   ： mjs
  * ファイル名     ： client.c
  * クラス名       ： MJSPlayerクラス
  * 処理概要       ： プレーヤークラス
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/11/14 20:17:29
+ * 最終更新日     ： 2026/11/15 11:46:33
  * 
  * Copyright (c) 2010-2026 TechMileStoraJP, All rights reserved.
  * 
@@ -328,6 +328,8 @@ void read_logline(struct MJSClient *cli, char *line_buf){
 		}else if( strcmp(tmp_buf, "{")  == 0 || 
 		          strcmp(tmp_buf, "}")  == 0 || 
 		          strcmp(tmp_buf, "\"") == 0 || 
+		          strcmp(tmp_buf, "\'") == 0 || 
+		          strcmp(tmp_buf, " ")  == 0 || 
 		          strcmp(tmp_buf, "[")  == 0 || 
 		          strcmp(tmp_buf, "]")  == 0 ){
 
@@ -439,8 +441,7 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "start_game" ) == 0 ){
 
 				// アクション設定
-				// set_type_startgame(cli, tmp_wk_count);
-				set_type_startgame(cli, 0);
+				set_type_startgame(cli);
 				
 				// type_noneメッセージの設定
 				set_snd_none_mes(tmp_snd_mes);
@@ -470,7 +471,7 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "tsumo" ) == 0 ){
 
 				// アクション設定
-				set_type_tsumo(cli, pinfo, tmp_snd_mes, 0);
+				set_type_tsumo(cli, pinfo, tmp_snd_mes);
 
 				// possible_actionsの値を確認するためにbreakで抜けない
 				// → メッセージ確定のために処理抜け
@@ -483,7 +484,7 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "reach" ) == 0 ){
 
 				// アクション設定：リーチ後の捨牌処理
-				set_type_riichi(cli, pinfo, tmp_snd_mes, 0);
+				set_type_riichi(cli, pinfo, tmp_snd_mes);
 
 				// メッセージ確定のために処理抜け
 				// break;
@@ -525,7 +526,7 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "dahai" ) == 0 ){
 
 				// アクション設定：捨牌(打牌)アクション
-				set_type_dahai(cli, pinfo, tmp_snd_mes, 0);
+				set_type_dahai(cli, pinfo, tmp_snd_mes);
 
 				// possible_actionsの値を確認するためにbreakで抜けない
 				// break;
@@ -537,7 +538,7 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "pon" ) == 0 ){
 
 				// アクション設定
-				set_type_pon(cli, pinfo, tmp_snd_mes, 0);
+				set_type_pon(cli, pinfo, tmp_snd_mes);
 
 				// メッセージ確定のために処理抜け
 				// break;
@@ -549,7 +550,7 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "chi" ) == 0 ){
 
 				// アクション設定
-				set_type_chi(cli, pinfo, tmp_snd_mes, 0);
+				set_type_chi(cli, pinfo, tmp_snd_mes);
 
 				// メッセージ確定のために処理抜け
 				// break;
@@ -603,7 +604,7 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "hora" ) == 0 ){
 
 				// アクション設定
-				set_type_hora(cli, 0);
+				set_type_hora(cli);
 
 				// type_noneメッセージの設定
 				set_snd_none_mes(tmp_snd_mes);
@@ -618,7 +619,7 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "ryukyoku" ) == 0 ){
 
 				// アクション設定
-				set_type_ryukyoku(cli, 0);
+				set_type_ryukyoku(cli);
 
 				// type_noneメッセージの設定
 				set_snd_none_mes(tmp_snd_mes);
@@ -633,7 +634,7 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 			         strcmp(cli->wk_str[tmp_wk_count+1], "end_kyoku" ) == 0 ){
 
 				// アクション設定
-				set_type_endkyoku(cli, 0);
+				set_type_endkyoku(cli);
 
 				// type_noneメッセージの設定
 				set_snd_none_mes(tmp_snd_mes);
@@ -690,7 +691,7 @@ void chk_mjai_type_main(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *t
 /* ---------------------------------------------------------------------------------------------- */
 // 卓ゲーム開始処理
 /* ---------------------------------------------------------------------------------------------- */
-void set_type_startgame(struct MJSClient *cli, int tmp_wk_num){
+void set_type_startgame(struct MJSClient *cli){
 
 	// ----------------------------------------
 	// 卓情報の算出
@@ -905,7 +906,7 @@ void set_type_startkyoku(struct MJSClient *cli){
 /* ---------------------------------------------------------------------------------------------- */
 // typeごとでの値設定(tsumo)
 /* ---------------------------------------------------------------------------------------------- */
-void set_type_tsumo(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num){
+void set_type_tsumo(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes){
 
 	// ----------------------------------------
 	// 前処理
@@ -1024,7 +1025,7 @@ void set_post_tsumo_act(struct MJSPlyInfo *pinfo){
 /* ---------------------------------------------------------------------------------------------- */
 // typeごとでの値設定(dahai)
 /* ---------------------------------------------------------------------------------------------- */
-void set_type_dahai(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num){
+void set_type_dahai(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes){
 
 	// 初期化
 	int tmp_ply_sute_id = 0;
@@ -1046,12 +1047,6 @@ void set_type_dahai(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_s
 		}
 
 	}
-
-	// 手番設定
-	// tmp_ply_sute_id = atoi(cli->wk_str[tmp_wk_num+3]);
-
-	// 自摸牌確認
-	// cli_sute_hai = get_hainum(cli->wk_str[tmp_wk_num+5]);
 
 	// ----------------------------------------
 	// 捨牌プレーヤが有効範囲内であるか？
@@ -1112,7 +1107,7 @@ void set_type_dahai(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_s
 /* ---------------------------------------------------------------------------------------------- */
 // typeごとでの値設定(riichi)
 /* ---------------------------------------------------------------------------------------------- */
-void set_type_riichi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num){
+void set_type_riichi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes){
 
 	// ----------------------------------------
 	// 初期化
@@ -1133,9 +1128,6 @@ void set_type_riichi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_
 		}
 
 	}
-
-	// 手番設定
-	// tmp_ply_id = atoi(cli->wk_str[tmp_wk_num+3]);
 
 	// ----------------------------------------
 	// 手番プレーヤが有効範囲内であるか？
@@ -1203,7 +1195,7 @@ void set_type_riichi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_
 /* ---------------------------------------------------------------------------------------------- */
 // typeごとでの値設定(pon)
 /* ---------------------------------------------------------------------------------------------- */
-void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num){
+void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes){
 
 	// ----------------------------------------
 	// 初期化
@@ -1220,7 +1212,7 @@ void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 	// ----------------------------------------
 	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
 
-		// 手番設定
+		// REACTプレーヤー(targetプレーヤー)の特定
 		if(strcmp(cli->wk_str[tmp_subwk_count], "actor" ) == 0 ){
 			tmp_naki_ply_id = atoi(cli->wk_str[tmp_subwk_count+1]);
 		// 鳴き牌情報設定
@@ -1238,13 +1230,6 @@ void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 	}
 
 	// ----------------------------------------
-	// REACTプレーヤー(targetプレーヤー)の特定
-	// ----------------------------------------
-
-	// プレーヤーID確認
-	// tmp_naki_ply_id  = atoi(cli->wk_str[tmp_wk_num+3]);
-
-	// ----------------------------------------
 	// 鳴きプレーヤが有効範囲内であるか？
 	// ----------------------------------------
 	if( tmp_naki_ply_id > -1 && tmp_naki_ply_id < 4 ){
@@ -1258,9 +1243,6 @@ void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 			// ポン牌確認(捨牌)
 			// ----------------------------------------
 
-			// 手牌読込
-			// tmp_naki_hai = get_hainum(cli->wk_str[tmp_wk_num+7]);
-
 			// 赤牌確認
 			if (tmp_naki_hai > 100){
 				tmp_naki_hai = tmp_naki_hai - 100;
@@ -1271,9 +1253,6 @@ void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 			// 手牌確認(1枚目)
 			// ----------------------------------------
 
-			// 手牌読込
-			// tmp_naki_tehai_hai1 = get_hainum(cli->wk_str[tmp_wk_num+9]);
-
 			// 赤牌確認
 			if (tmp_naki_tehai_hai1 > 100){
 				tmp_naki_tehai_hai1 = tmp_naki_tehai_hai1 - 100;
@@ -1283,9 +1262,6 @@ void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 			// ----------------------------------------
 			// 手牌確認(2枚目)
 			// ----------------------------------------
-
-			// 手牌読込
-			// tmp_naki_tehai_hai2 = get_hainum(cli->wk_str[tmp_wk_num+10]);
 
 			// 赤牌確認
 			if (tmp_naki_tehai_hai2 > 100){
@@ -1346,7 +1322,7 @@ void set_type_pon(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 /* ---------------------------------------------------------------------------------------------- */
 // typeごとでの値設定(chi)
 /* ---------------------------------------------------------------------------------------------- */
-void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes, int tmp_wk_num){
+void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd_mes){
 
 	// ----------------------------------------
 	// 初期化
@@ -1367,7 +1343,7 @@ void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 	// ----------------------------------------
 	for( int tmp_subwk_count = 0; tmp_subwk_count < cli->wk_str_count; tmp_subwk_count++ ) {
 
-		// 手番設定
+		// REACTプレーヤー(targetプレーヤー)の特定
 		if(strcmp(cli->wk_str[tmp_subwk_count], "actor" ) == 0 ){
 			tmp_naki_ply_id = atoi(cli->wk_str[tmp_subwk_count+1]);
 		// 鳴き牌情報設定
@@ -1385,13 +1361,6 @@ void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 	}
 
 	// ----------------------------------------
-	// REACTプレーヤー(targetプレーヤー)の特定
-	// ----------------------------------------
-
-	// プレーヤーID確認
-	// tmp_naki_ply_id  = atoi(cli->wk_str[tmp_wk_num+3]);
-
-	// ----------------------------------------
 	// 鳴きプレーヤが有効範囲内であるか？
 	// ----------------------------------------
 	if( tmp_naki_ply_id > -1 && tmp_naki_ply_id < 4 ){
@@ -1404,7 +1373,6 @@ void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 			// ----------------------------------------
 			// チー牌確認(捨牌)
 			// ----------------------------------------
-			// tmp_naki_hai = get_hainum(cli->wk_str[tmp_wk_num+7]);
 			if (tmp_naki_hai > 100){
 				tmp_naki_hai = tmp_naki_hai - 100;
 				tmp_aka_count++;
@@ -1413,7 +1381,6 @@ void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 			// ----------------------------------------
 			// チー構成牌(1枚目)
 			// ----------------------------------------
-			// tmp_naki_tehai_hai1 = get_hainum(cli->wk_str[tmp_wk_num+9]);
 			if (tmp_naki_tehai_hai1 > 100){
 				tmp_naki_tehai_hai1 = tmp_naki_tehai_hai1 - 100;
 				tmp_aka_count++;
@@ -1422,7 +1389,6 @@ void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 			// ----------------------------------------
 			// チー構成牌(2枚目)
 			// ----------------------------------------
-			// tmp_naki_tehai_hai2 = get_hainum(cli->wk_str[tmp_wk_num+10]);
 			if (tmp_naki_tehai_hai2 > 100){
 				tmp_naki_tehai_hai2 = tmp_naki_tehai_hai2 - 100;
 				tmp_aka_count++;
@@ -1503,7 +1469,7 @@ void set_type_chi(struct MJSClient *cli, struct MJSPlyInfo *pinfo, char *tmp_snd
 /* ---------------------------------------------------------------------------------------------- */
 // typeごとでの値設定(hora)
 /* ---------------------------------------------------------------------------------------------- */
-void set_type_hora(struct MJSClient *cli, int tmp_wk_num){
+void set_type_hora(struct MJSClient *cli){
 
 	// ----------------------------------------
 	// 変数定義
@@ -1568,7 +1534,7 @@ void set_type_hora(struct MJSClient *cli, int tmp_wk_num){
 /* ---------------------------------------------------------------------------------------------- */
 // typeごとでの値設定(ryukyoku)
 /* ---------------------------------------------------------------------------------------------- */
-void set_type_ryukyoku(struct MJSClient *cli, int tmp_wk_num){
+void set_type_ryukyoku(struct MJSClient *cli){
 
 	// ----------------------------------------
 	// 変数定義
@@ -1632,7 +1598,7 @@ void set_type_ryukyoku(struct MJSClient *cli, int tmp_wk_num){
 /* ---------------------------------------------------------------------------------------------- */
 // typeごとでの値設定(end_kyoku)
 /* ---------------------------------------------------------------------------------------------- */
-void set_type_endkyoku(struct MJSClient *cli, int tmp_wk_num){
+void set_type_endkyoku(struct MJSClient *cli){
 
 	// ----------------------------------------
 	// 局終了設定

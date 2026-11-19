@@ -5,9 +5,9 @@
 
 ## 履歴
  * プログラム概要 ： mjscli：Mjaiクライアント
- * バージョン     ： 0.0.0.0.9(client処理修正4：set_type_pon,set_type_chi修正)
+ * バージョン     ： 0.0.0.0.10(client処理修正5：tmp_wk_num変数の削除)
  * Ver0.0.0作成日 ： 2026/09/21 17:09:46
- * 最終更新日     ： 2026/11/14 20:17:29
+ * 最終更新日     ： 2026/11/15 11:46:33
 
 ## Github
  * [mjsplayer2020/mjscli](https://github.com/mjsplayer2020/mjscli)
